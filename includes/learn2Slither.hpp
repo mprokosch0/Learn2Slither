@@ -11,6 +11,8 @@ extern "C"
 # include <string>
 # include <memory>
 # include <algorithm>
+# include <vector>
+# include <unordered_map>
 
 struct box
 {
@@ -23,15 +25,18 @@ struct box
 class Image
 {
 	private:
-		void	*_mlx;
-		void	*_img;
-		char	*_addr;
-		int		_bitsPerPixel;
-		int		_lineLength;
-		int		_endian;
-		size_t	_width;
-		size_t	_height;
+		void															*_mlx;
+		void															*_img;
+		char															*_addr;
+		int																_bitsPerPixel;
+		int																_lineLength;
+		int																_endian;
+		static	std::unordered_map<char, std::vector<std::vector<int>>>	_font;
+		size_t															_width;
+		size_t															_height;
 	
+	private:
+		void	importFont(void);
 	
 	public:
 		Image(void);
@@ -53,6 +58,7 @@ class Image
 		void	destroy(void);
 		void	putPixel(int x, int y, int color);
 		void	putRectangle(box &rect, int color);
+		void	putString(int x, int y, std::string text);
 
 };
 
@@ -60,12 +66,13 @@ class Button
 {
 	private:
 		static int	_borderWidth;
+		std::string	_text;
 		box			_dimentions;
 		int			_color;
 		bool		_hover;
 	
 	public:
-		Button(box dim, int color);
+		Button(box dim, int color, std::string text);
 		Button(Button const &rhs);
 		~Button();
 	
@@ -74,13 +81,16 @@ class Button
 	
 	public:
 		void	render(Image &img);
+		void	clearHover(void);
+		bool	hoverIfOnButton(int x, int y);
 };
 
 class IScreen
 {
 	protected:
-		size_t	_width;
-		size_t	_height;
+		size_t				_width;
+		size_t				_height;
+		std::vector<Button>	_buttons;
 
 	public:
 		IScreen(size_t width, size_t height):
@@ -91,21 +101,30 @@ class IScreen
 		virtual void update() = 0;
 		virtual void render(Image &img) = 0;
 		virtual void onKey(int keycode) = 0;
-		virtual void onMouse(/*int button, int x, int y*/){};
+		virtual void onMouseMove(int x, int y) = 0;
 };
 
 class TitleScreen : public IScreen
 {
-	private:
-
-
 	public:
 		TitleScreen(size_t width, size_t height);
 
 	public:
-		void update() override;
-		void render(Image &img) override;
-		void onKey(int keycode) override;
+		void	update() override;
+		void	render(Image &img) override;
+		void	onKey(int keycode) override;
+		void	onMouseMove(int x, int y) override;
+};
+
+enum events
+{
+	ON_KEYDOWN = 2,
+	ON_KEYUP = 3,
+	ON_MOUSEDOWN = 4,
+	ON_MOUSEUP = 5,
+	ON_MOUSEMOVE = 6,
+	ON_EXPOSE = 12,
+	ON_DESTROY = 17
 };
 
 class Engine
@@ -120,6 +139,8 @@ class Engine
 
 	private:
 		static int	loopTrampoline(void *self);
+		static int	mouseMoveTrampoline(int x, int y, void *self);
+		void		mouseMove(int x, int y);
 		void		loop();
 
 

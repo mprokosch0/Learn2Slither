@@ -4,7 +4,7 @@ int main()
 {
 	try
 	{
-		Engine engine(500, 500);
+		Engine engine(1422, 800);
 		engine.run();
 	}
 	catch(const std::exception& e)
