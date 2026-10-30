@@ -168,6 +168,18 @@ void	Image::putRectangle(box &rect, int color)
 	}
 }
 
+int		Image::getStringSize(std::string &str)
+{
+	int size = 0;
+	for (char c : str)
+	{
+		if (Image::_font.find(c) == Image::_font.end())
+			throw std::runtime_error("Unrecognise char in text. Please refers you to the font");
+		size += Image::_font[c].size();
+	}
+	return size;
+}
+
 void	Image::putString(int x, int y, std::string text)
 {
 	for (char c: text)

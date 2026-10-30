@@ -2,10 +2,10 @@
 
 TitleScreen::TitleScreen(size_t width, size_t height): IScreen(width, height)
 {
-	this->_buttons.emplace_back((box){(static_cast<int>(width) / 2) - 400,
-			(static_cast<int>(height) / 2) + 75, 800, 50}, 0x407560, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+,;:!?.*&#%");
-	// this->_buttons.emplace_back((box){(static_cast<int>(width) / 2) - 100,
-	// 		(static_cast<int>(height) / 2) + 150, 200, 50}, 0x407560, "Docteur9!?");
+	this->_buttons.emplace_back((box){(static_cast<int>(width) / 2) - 100,
+			(static_cast<int>(height) / 2) + 75, 200, 50}, 0x407560, "Play");
+	this->_buttons.emplace_back((box){(static_cast<int>(width) / 2) - 100,
+			(static_cast<int>(height) / 2) + 150, 200, 50}, 0x407560, "Quit");
 }
 
 void	TitleScreen::update(void)

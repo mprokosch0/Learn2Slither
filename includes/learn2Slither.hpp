@@ -12,6 +12,7 @@ extern "C"
 # include <memory>
 # include <algorithm>
 # include <vector>
+# include <exception>
 # include <unordered_map>
 
 struct box
@@ -54,11 +55,12 @@ class Image
 		int		getEndian(void) const;
 	
 	public:
-		void	init(void *mlx, size_t width, size_t height);
-		void	destroy(void);
-		void	putPixel(int x, int y, int color);
-		void	putRectangle(box &rect, int color);
-		void	putString(int x, int y, std::string text);
+		static int	getStringSize(std::string &str);
+		void		init(void *mlx, size_t width, size_t height);
+		void		destroy(void);
+		void		putPixel(int x, int y, int color);
+		void		putRectangle(box &rect, int color);
+		void		putString(int x, int y, std::string text);
 
 };
 
@@ -67,6 +69,7 @@ class Button
 	private:
 		static int	_borderWidth;
 		std::string	_text;
+		int			_textSize;
 		box			_dimentions;
 		int			_color;
 		bool		_hover;
@@ -136,6 +139,7 @@ class Engine
 		size_t						_height;
 		Image						_img;
 		std::unique_ptr<IScreen>	_screen;
+		std::exception_ptr			_error;
 
 	private:
 		static int	loopTrampoline(void *self);

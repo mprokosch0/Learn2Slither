@@ -1,2 +1,3 @@
 - grid must be min 10x10 and max size of 50x50 (but can be a rectangle)
 - models must be trained unindependantly from the grid size
+- font is 14px in height
