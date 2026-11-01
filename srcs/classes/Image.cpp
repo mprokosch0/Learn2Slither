@@ -101,7 +101,6 @@ void	Image::importFont(void)
 		this->_font.emplace(c, pixels);
 		mlx_destroy_image(this->_mlx, img.img);
 	}
-	this->_font.emplace(' ', std::vector<std::vector<int>>({{0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff}}));
 }
 
 void	Image::init(void *mlx, size_t width, size_t height)
@@ -142,7 +141,7 @@ void	Image::putPixel(int x, int y, int color)
 	*(unsigned int*)dst = color;
 }
 
-void	Image::putRectangle(box &rect, int color)
+void	Image::putRectangle(box rect, int color)
 {
 	char	*dst;
 	if (rect.x < 0)
@@ -168,29 +167,51 @@ void	Image::putRectangle(box &rect, int color)
 	}
 }
 
-int		Image::getStringSize(std::string &str)
+int		Image::getStringSize(std::string str, float zoom)
 {
-	int size = 0;
+	float size = 0;
 	for (char c : str)
 	{
-		if (Image::_font.find(c) == Image::_font.end())
+		if (Image::_font.find(c) == Image::_font.end() && c != ' ')
 			throw std::runtime_error("Unrecognise char in text. Please refers you to the font");
-		size += Image::_font[c].size();
+		if (c == ' ')
+			size += 8 * zoom;
+		else
+			size += Image::_font[c].size() * zoom;
 	}
-	return size;
+	return static_cast<int>(size);
 }
 
-void	Image::putString(int x, int y, std::string text)
+void	Image::putString(int x, int y, std::string text, int color, float zoom)
 {
 	for (char c: text)
 	{
-		if (this->_font.find(c) == this->_font.end())
+		if (this->_font.find(c) == this->_font.end() &&  c != ' ')
 			throw std::runtime_error("Unrecognise char in text. Please refers you to the font");
+		if (c == ' ')
+		{
+			x += 8 * zoom;	
+			continue ;
+		}
 		std::vector<std::vector<int>> &pixels = this->_font[c];
-		for (size_t i = 0; i < pixels.size(); i++)
-			for (size_t j = 0; j < pixels[i].size(); j++)
+		for (size_t zoomI = 0; zoomI < pixels.size() * zoom; zoomI++)
+		{
+			size_t i = zoomI / zoom;
+			for (size_t zoomJ = 0; zoomJ < pixels[i].size() * zoom; zoomJ++)
+			{
+				size_t j = zoomJ / zoom;
 				if (pixels[i][j] != 0xffffff)
-					this->putPixel(x + i, y + j, pixels[i][j]);
-		x += pixels.size();
+					this->putPixel(x + zoomI, y + zoomJ, color);
+			}
+		}
+		x += pixels.size() * zoom;
 	}
+}
+
+void	Image::colorImage(int color)
+{
+	char *dst;
+
+	dst = this->_addr;
+	std::fill_n(reinterpret_cast<unsigned int*>(dst), this->_width * this->_height, color);
 }

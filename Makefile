@@ -12,8 +12,11 @@ MLXFLAGS = -lmlx -L$(MLX_PATH) -lXext -lX11 -lm
 SRCS =	srcs/main.cpp \
 		srcs/classes/Engine.cpp \
 		srcs/classes/Image.cpp \
+		srcs/classes/Text.cpp \
 		srcs/classes/Button.cpp \
+		srcs/classes/IScreen.cpp \
 		srcs/classes/TitleScreen.cpp \
+		srcs/classes/SelectScreen.cpp 
 
 OBJS_DIR = objs
 
