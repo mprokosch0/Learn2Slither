@@ -114,6 +114,7 @@ void	Engine::mouseMove(int x, int y)
 
 void	Engine::loop()
 {
+	this->_screen->update();
 	this->_screen->render(this->_img);
 	mlx_put_image_to_window(this->_mlx, this->_mlx_win, this->_img.getImg(), 0, 0);
 	if (this->_nextScreen)

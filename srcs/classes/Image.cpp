@@ -167,6 +167,61 @@ void	Image::putRectangle(box rect, int color)
 	}
 }
 
+void	Image::putRectangleBorder(box rect, int color, size_t borderWidth,
+			int borderColor)
+{
+	char	*dst;
+	if (rect.x < 0)
+	{
+		rect.w += rect.x;
+		rect.x = 0;
+	}
+	if (rect.y < 0)
+	{
+		rect.h += rect.y;
+		rect.y = 0;
+	}
+	if (rect.x + rect.w > static_cast<int>(this->_width))
+		rect.w = this->_width - rect.x;
+	if (rect.y + rect.h > static_cast<int>(this->_height))
+		rect.h = this->_height - rect.y;
+
+	int xRatio = rect.x * (this->_bitsPerPixel / 8);
+	for (int i = rect.y; i < rect.y + rect.h; i++)
+	{
+		dst = this->_addr + (i * this->_lineLength + xRatio);
+		std::fill_n(reinterpret_cast<unsigned int*>(dst), rect.w, color);
+	}
+	int bw = borderWidth;
+	box b = {.x = rect.x, .y = rect.y, .w = rect.w, .h = bw};
+	putRectangle(b, borderColor);
+	b = {.x = rect.x, .y = rect.y + (rect.h - bw), .w = rect.w, .h = bw};
+	putRectangle(b, borderColor);
+	b = {.x = rect.x, .y = rect.y + bw, .w = bw, .h = rect.h - bw};
+	putRectangle(b, borderColor);
+	b = {.x = rect.x + rect.w - bw, .y = rect.y + bw, .w = bw, .h = rect.h - bw};
+	putRectangle(b, borderColor);
+}
+
+void	Image::putHLine(int y, int xStart, int xEnd, int color, size_t width)
+{
+	if (y < 0 || y >= static_cast<int>(this->_height) || !width)
+		return ;
+
+	box b = {.x = xStart, .y = y - static_cast<int>(width) / 2,
+				.w = xEnd - xStart, .h = static_cast<int>(width) / 2};
+	putRectangle(b, color);
+}
+
+void	Image::putVLine(int x, int yStart, int yEnd, int color, size_t width)
+{
+	if (x < 0 || x >= static_cast<int>(this->_width) || !width)
+		return ;
+	box b = {.x = x - (static_cast<int>(width) / 2), .y = yStart,
+				.w = static_cast<int>(width), .h = yEnd - yStart};
+	putRectangle(b, color);
+}
+
 int		Image::getStringSize(std::string str, float zoom)
 {
 	float size = 0;
@@ -205,6 +260,8 @@ void	Image::putString(int x, int y, std::string text, int color, float zoom)
 			}
 		}
 		x += pixels.size() * zoom;
+		if (zoom != 1.f)
+			x++;
 	}
 }
 

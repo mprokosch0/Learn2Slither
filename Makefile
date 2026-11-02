@@ -13,6 +13,7 @@ SRCS =	srcs/main.cpp \
 		srcs/classes/Engine.cpp \
 		srcs/classes/Image.cpp \
 		srcs/classes/Text.cpp \
+		srcs/classes/Rectangle.cpp \
 		srcs/classes/Button.cpp \
 		srcs/classes/IScreen.cpp \
 		srcs/classes/TitleScreen.cpp \

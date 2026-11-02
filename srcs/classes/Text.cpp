@@ -2,9 +2,14 @@
 
 size_t	Text::_height = 14;
 
-Text::Text(std::string text, float zoom, int color):
+Text::Text(void): _text(""), _zoom(1.f),
+	_width(0),
+	_color(0xffffff), _hoverColor(0xffffff)
+{}
+
+Text::Text(std::string text, float zoom, int color, int secondCol):
 	_text(text), _zoom(zoom), _width(Image::getStringSize(text, zoom)),
-	_color(color)
+	_color(color), _hoverColor(secondCol)
 {}
 
 Text::Text(Text const &rhs)
@@ -23,12 +28,15 @@ Text	&Text::operator=(Text const &rhs)
 	this->_zoom = rhs._zoom;
 	this->_width = rhs._width;
 	this->_color = rhs._color;
+	this->_hoverColor = rhs._hoverColor;
 	return *this;
 }
 
-void	Text::render(int x, int y, Image &img, HAlign hAlign, VAlign vAlign)
+void	Text::render(int x, int y, Image &img, HAlign hAlign,
+	VAlign vAlign, Colors color) const
 {
 	size_t newX = 0, newY = 0;
+	int col = this->_color;
 	switch (hAlign)
 	{
 		case HAlign::Left:
@@ -57,5 +65,8 @@ void	Text::render(int x, int y, Image &img, HAlign hAlign, VAlign vAlign)
 			newY = y - this->_height;
 			break;
 	}
-	img.putString(newX, newY, this->_text, this->_color, this->_zoom);
+	if (color == Colors::Secondary)
+		col = this->_hoverColor;
+
+	img.putString(newX, newY, this->_text, col, this->_zoom);
 }

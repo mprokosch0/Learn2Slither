@@ -55,27 +55,39 @@ bool	Button::hoverIfOnButton(int x, int y)
 	return false;
 }
 
+box	Button::getDimentions(void) const
+{
+	return this->_dimentions;
+}
+
 void	Button::click(Engine &engine) const
 {
 	this->_onClickFunction(engine);
 }
 
-void	Button::render(Image &img)
+void	Button::render(Image &img) const
 {
-	img.putRectangle(this->_dimentions, this->_color);
+	int borderColor = (this->_hover) ? this->_borderHoverColor : this->_borderColor;
+	int color = (this->_hover) ? this->_hoverColor : this->_color;
+	img.putRectangle(this->_dimentions, color);
 	box border = this->_dimentions;
 	border.h = this->_borderWidth;
-	int color = (this->_hover) ? this->_borderHoverColor : this->_borderColor;
-	img.putRectangle(border, color);
+	img.putRectangle(border, borderColor);
 	border.y += (this->_dimentions.h - this->_borderWidth);
-	img.putRectangle(border, color);
+	img.putRectangle(border, borderColor);
 	border = {.x = border.x, .y = this->_dimentions.y + this->_borderWidth,
 				.w = this->_borderWidth,
 				.h = this->_dimentions.h - (2 * this->_borderWidth)};
-	img.putRectangle(border, color);
+	img.putRectangle(border, borderColor);
 	border.x += (this->_dimentions.w - this->_borderWidth);
-	img.putRectangle(border, color);
+	img.putRectangle(border, borderColor);
+	Text::Colors col = (this->_hover) ? Text::Colors::Secondary : Text::Colors::Primary;
 	this->_text.render(this->_dimentions.x + (this->_dimentions.w / 2),
 						this->_dimentions.y + (this->_dimentions.h / 2),
-					img, Text::HAlign::Center, Text::VAlign::Center);
+					img, Text::HAlign::Center, Text::VAlign::Center, col);
 }
+
+// void	Button::renderClip(Image &img, box &clip) const
+// {
+
+// }
