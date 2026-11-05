@@ -53,7 +53,11 @@ class Text
 		enum class HAlign {Left, Center, Right};
 		enum class VAlign {Top, Center, Bottom};
 		enum class Colors {Primary, Secondary};
+		const std::string	&getText(void) const;
 		void	render(int x, int y, Image &img,
+			HAlign hAlign = HAlign::Left, VAlign vAlign = VAlign::Center,
+			Colors color = Colors::Primary) const;
+		void	renderClip(int x, int y, Image &img, box &clip,
 			HAlign hAlign = HAlign::Left, VAlign vAlign = VAlign::Center,
 			Colors color = Colors::Primary) const;
 };
@@ -76,8 +80,9 @@ class Rectangle
 		Rectangle &operator=(Rectangle const &rhs);
 	
 	public:
-		void	render(Image &img) const;
-		box		getDimentions(void) const;
+		void		render(Image &img) const;
+		const box	getDimentions(void) const;
+		int			getBorderWidth(void) const;
 };
 
 class Image
@@ -122,6 +127,7 @@ class Image
 		void		putHLine(int y, int xStart, int xEnd, int color, size_t width);
 		void		putVLine(int x, int yStart, int yEnd, int color, size_t width);
 		void		putString(int x, int y, std::string text, int color, float zoom);
+		void		putStringClip(int x, int y, std::string text, box &clip, int color, float zoom);
 
 };
 
@@ -136,11 +142,13 @@ class Button
 		int								_borderColor;
 		int								_borderHoverColor;
 		bool							_hover;
+		bool							_active;
 		std::function<void(Engine &)>	_onClickFunction;
 	
 	public:
 		Button(box dim, int color, int hoverColor, int borderColor,
-			int borderHovercolor, Text text, std::function<void(Engine &)> func);
+			int borderHovercolor, Text text, bool active,
+			std::function<void(Engine &)> func);
 		Button(Button const &rhs);
 		~Button();
 	
@@ -148,13 +156,20 @@ class Button
 		Button	&operator=(Button const &rhs);
 	
 	public:
-		void	click(Engine &engine) const;
-		void	render(Image &img) const;
-		// void	renderClip(Image &img, box &clip) const;
-		void	clearHover(void);
-		bool	hoverIfOnButton(int x, int y);
-		bool	isMouseOn(void) const;
-		box		getDimentions(void) const;
+		void		click(Engine &engine) const;
+		void		render(Image &img) const;
+		void		renderClip(Image &img, box &clip) const;
+		void		clearHover(void);
+		bool		hoverIfOnButton(int x, int y);
+		bool		hoverIfOnButtonClip(int x, int y, box &clip);
+		bool		isMouseOn(void) const;
+		void		setDimentions(box &dim);
+		const box	&getDimentions(void) const;
+		const Text	&getText(void) const;
+		bool		isActive(void) const;
+		void		activate(void);
+		void		desactivate(void);
+
 };
 
 struct Hooks
@@ -214,9 +229,13 @@ class SelectScreen : public IScreen
 		std::pair<Text, std::array<int, 2>>					_title;
 		std::vector<std::pair<Text, std::array<int, 2>>>	_texts;
 		std::vector<Rectangle>								_rectangles;
-		Rectangle											_fileList;
+		Rectangle											_fileListRect;
 
 	private:
+		void	addEntry(void);
+		void	removeEntry(void);
+		void	updateFilesVector(void);
+		void	scrollButtonsFiles(int button);
 		void	renderScrollList(Image &img) const;
 
 

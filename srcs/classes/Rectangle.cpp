@@ -29,9 +29,14 @@ Rectangle	&Rectangle::operator=(Rectangle const &rhs)
 	return *this;
 }
 
-box		Rectangle::getDimentions(void) const
+const box	Rectangle::getDimentions(void) const
 {
 	return this->_dimentions;
+}
+
+int		Rectangle::getBorderWidth(void) const
+{
+	return this->_borderWidth;
 }
 
 void	Rectangle::render(Image &img) const

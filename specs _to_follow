@@ -1,3 +1,12 @@
 - grid must be min 10x10 and max size of 50x50 (but can be a rectangle)
 - models must be trained unindependantly from the grid size
 - font is 14px in height
+
+- QTable:	- 4 possible actions (UP, DOWN, LEFT, RIGHT), 3 in reality at each time
+			- 4 states possibles (on green apple, on red apple, on regular case, on obstacle e.g. wall or body)
+
+- Rewards:	- eat red apple: 	-10 pts
+			- eat green apple:	+10 pts
+			- eat nothing:		-0.1 pts
+			- Game over:		-100 pts
+			- Win:				+100 pts

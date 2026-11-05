@@ -32,6 +32,11 @@ Text	&Text::operator=(Text const &rhs)
 	return *this;
 }
 
+const std::string	&Text::getText(void) const
+{
+	return this->_text;
+}
+
 void	Text::render(int x, int y, Image &img, HAlign hAlign,
 	VAlign vAlign, Colors color) const
 {
@@ -69,4 +74,43 @@ void	Text::render(int x, int y, Image &img, HAlign hAlign,
 		col = this->_hoverColor;
 
 	img.putString(newX, newY, this->_text, col, this->_zoom);
+}
+
+void	Text::renderClip(int x, int y, Image &img, box &clip, HAlign hAlign,
+	VAlign vAlign, Colors color) const
+{
+	size_t newX = 0, newY = 0;
+	int col = this->_color;
+	switch (hAlign)
+	{
+		case HAlign::Left:
+			newX = x;
+			break;
+		
+		case HAlign::Center:
+			newX = x - (this->_width / 2);
+			break;
+		
+		case HAlign::Right:
+			newX = x - this->_width;
+			break;
+	}
+	switch (vAlign)
+	{
+		case VAlign::Top:
+			newY = y;
+			break;
+		
+		case VAlign::Center:
+			newY = y - (this->_height / 2);
+			break;
+		
+		case VAlign::Bottom:
+			newY = y - this->_height;
+			break;
+	}
+	if (color == Colors::Secondary)
+		col = this->_hoverColor;
+
+	img.putStringClip(newX, newY, this->_text, clip, col, this->_zoom);
 }
