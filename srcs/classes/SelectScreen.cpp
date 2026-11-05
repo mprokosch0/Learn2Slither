@@ -48,8 +48,8 @@ box		clip(const box &button, const Rectangle &rectangle)
 {
 	box rect = rectangle.getDimentions();
 	int	bWidth = rectangle.getBorderWidth();
-	int x1 = std::max(button.x, rect.x);
-	int y1 = std::max(button.y, rect.y);
+	int x1 = std::max(button.x, rect.x + bWidth);
+	int y1 = std::max(button.y, rect.y + bWidth);
 	int x2 = std::min(button.x + button.w, rect.x + rect.w - bWidth);
 	int y2 = std::min(button.y + button.h, rect.y + rect.h - bWidth);
 	return (box){x1, y1, std::max(0, x2 - x1), std::max(0, y2 - y1)};
