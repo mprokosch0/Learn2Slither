@@ -7,7 +7,8 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++20 -g -Iincludes -MMD -MP
 SRCS =	srcs/main.cpp \
 		srcs/Board.cpp \
 		srcs/Snake.cpp \
-		srcs/Interpreter.cpp
+		srcs/Interpreter.cpp \
+		srcs/Agent.cpp
 		
 OBJS_DIR = objs
 

@@ -6,9 +6,16 @@
 # include <string>
 # include <algorithm>
 # include <array>
+# include <cstring>
+# include <unistd.h>
 # include <unordered_map>
+# include <map>
+# include <sstream>
+# include <fstream>
 # include <vector>
 # include <cstdlib>
+
+# define INT_MIN -2147483648
 
 enum class Actions
 {
@@ -98,9 +105,9 @@ class Board
 		const Directions							&getSnakeOrientation(void) const;
 		size_t										getSnakeSize(void) const;
 		double										snakeMove(Actions dir);
+		void										reset(void);
 		bool										hasLost(void) const;
 		bool										hasWon(void) const;
-		void										reset(void);
 };
 
 class Interpreter
@@ -112,11 +119,13 @@ class Interpreter
 		std::array<bool, 2>	_snakeSize;		//diff value depending the snake length
 		double				_reward;
 		Actions				_action;
+		bool				_win;
+		bool				_lose;
 
 	public:
 		Interpreter(void);
 		Interpreter(const std::vector<std::vector<GridValues>> &views, size_t snakeSize,
-						double reward, Actions action);
+						double reward, Actions action, bool win, bool lose);
 		Interpreter(Interpreter const &rhs);
 		~Interpreter();
 	
@@ -127,21 +136,31 @@ class Interpreter
 		int		getState(void) const;
 		double	getReward(void) const;
 		Actions	getAction(void) const;
-
+		bool	isTerminal(void) const;
 };
 
-# define LR_RATE 0.1
-# define DISCOUNT_FACTOR 0.5
+# define LR_RATE 0.3
+# define DISCOUNT_FACTOR 0.9
 
 class Agent
 {
 	private:
-		std::unordered_map<double, std::array<double, 3>>	_QTable;
-		int													_state;
+		std::unordered_map<int, std::array<double, 3>>	_QTable;
+		int												_state;
+		float											_learningRate;
+		float											_discountFactor;
+		float											_expRate;
+		u_int32_t										_gamesPlayed;
+		int												_nbWin;
+		float											_winRatio;
 	
+	private:
+		void	parseModel(std::ifstream &file);
 	
+
 	public:
 		Agent(void);
+		Agent(double learningRate, double discountFactor);
 		Agent(Agent const &rhs);
 		~Agent();
 	
@@ -149,8 +168,15 @@ class Agent
 		Agent	&operator=(Agent const &rhs);
 	
 	public:
-		void	updateQTable(Interpreter &i);
 		void	setState(int state);
+		void	incrementTotalGames(bool win);
+		float	getWinRatio(void);
+		int		getGamePlayed(void) const;
+		void	updateQTable(Interpreter &i);
+		void 	decayExploration(void);
+		Actions	chooseAction(void);
+		void	exportModel(std::string name);
+		void	importModel(std::string model);
 
 };
 

@@ -128,6 +128,8 @@ size_t	Board::getSnakeSize(void) const
 const std::vector<std::vector<GridValues>>	Board::getSnakeViews(void) const
 {
 	std::vector<std::vector<GridValues>> res;
+	if (!this->_snake.size())
+		return res;
 	int x = this->_snake.getHeadPos().first;
 	int y = this->_snake.getHeadPos().second;
 	Directions	dir = this->_snake.getOrientation();
@@ -143,6 +145,10 @@ const std::vector<std::vector<GridValues>>	Board::getSnakeViews(void) const
 	std::vector<GridValues> east(row.begin() + x + 1, row.end());
 	std::vector<GridValues> west(row.rbegin() + (row.size() - x), row.rend());
 
+	for (auto *v : {&north, &south, &east, &west})
+		if (v->empty())
+			v->push_back(GridValues::WALL);
+	
 	if (dir == Directions::NORTH) // convention clockwise : Front, right, behind, left
 		res = {north, east, south, west};
 	else if (dir == Directions::EAST)
