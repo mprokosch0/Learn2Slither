@@ -55,7 +55,8 @@ void	Board::prepareGrid(void)
 	genApple(1);
 }
 
-Board::Board(size_t rows, size_t cols): _rows(rows), _cols(cols), _lose(false), _win(false)
+Board::Board(size_t rows, size_t cols): _rows(rows + 2), _cols(cols + 2),
+	_lose(false), _win(false)
 {
 	srand(time(NULL));
 	if (rows < 10 || rows > 40)
@@ -64,7 +65,7 @@ Board::Board(size_t rows, size_t cols): _rows(rows), _cols(cols), _lose(false), 
 	if (cols < 10 || cols > 40)
 		throw std::invalid_argument("Board: error: rows size must be between"
 			 "10 and 40 (included) instead got: " + std::to_string(cols));
-	this->_grid.assign(rows, std::vector<GridValues>(cols, GridValues::EMPTY));
+	this->_grid.assign(_rows, std::vector<GridValues>(_cols, GridValues::EMPTY));
 	prepareGrid();
 }
 
@@ -167,14 +168,14 @@ double	Board::snakeMove(Actions dir)
 	const std::vector<std::pair<int, int>>	&snakePos = this->_snake.getPos();
 	int x = snakePos[0].first;
 	int y = snakePos[0].second;
-	double reward = -0.1;
+	double reward = -0.3;
 
 	if (this->_grid[y][x] != GridValues::GREEN_APPLE)
 		this->_grid[tPos.second][tPos.first] = GridValues::EMPTY;
 	if (this->_grid[y][x] == GridValues::WALL || this->_grid[y][x] == GridValues::SNAKE_BODY)
 	{
 		this->_lose = true;
-		reward = -100.0;
+		reward = -50.0;
 	}
 	else if (this->_grid[y][x] == GridValues::GREEN_APPLE)
 	{
@@ -204,12 +205,12 @@ double	Board::snakeMove(Actions dir)
 	if (!this->_lose && this->_snake.size() == 10)
 	{
 		this->_win = true;
-		reward = 100.0;
+		reward = 50.0;
 	}
 	else if (!this->_snake.size())
 	{
 		this->_lose = true;
-		reward = -100.0;
+		reward = -50.0;
 	}
 	return reward;
 }

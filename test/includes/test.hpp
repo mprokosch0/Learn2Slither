@@ -113,9 +113,9 @@ class Board
 class Interpreter
 {
 	private:
-		std::array<bool, 3>	_danger; 		//if danger is adjacent on the direction
-		std::array<bool, 4>	_greenApple;	//if green apple in direction
-		std::array<bool, 4>	_redApple;		//if red apple in direction
+		std::array<int, 4>	_danger; 		//if danger is adjacent on the direction
+		std::array<int, 4>	_greenApple;	//if green apple in direction
+		std::array<int, 4>	_redApple;		//if red apple in direction
 		std::array<bool, 2>	_snakeSize;		//diff value depending the snake length
 		double				_reward;
 		Actions				_action;
@@ -139,9 +139,6 @@ class Interpreter
 		bool	isTerminal(void) const;
 };
 
-# define LR_RATE 0.3
-# define DISCOUNT_FACTOR 0.9
-
 class Agent
 {
 	private:
@@ -153,6 +150,7 @@ class Agent
 		u_int32_t										_gamesPlayed;
 		int												_nbWin;
 		float											_winRatio;
+		bool											_training;
 	
 	private:
 		void	parseModel(std::ifstream &file);
@@ -160,18 +158,22 @@ class Agent
 
 	public:
 		Agent(void);
-		Agent(double learningRate, double discountFactor);
+		Agent(double learningRate, double discountFactor, double epsilon);
 		Agent(Agent const &rhs);
 		~Agent();
 	
 	public:
+		bool				lastWasRandom;
 		Agent	&operator=(Agent const &rhs);
 	
 	public:
 		void	setState(int state);
+		int 	getState(void) const;
+		void	setTraining(bool training);
 		void	incrementTotalGames(bool win);
 		float	getWinRatio(void);
 		int		getGamePlayed(void) const;
+		float	getExplRate(void) const;
 		void	updateQTable(Interpreter &i);
 		void 	decayExploration(void);
 		Actions	chooseAction(void);

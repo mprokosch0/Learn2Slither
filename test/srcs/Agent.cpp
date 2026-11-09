@@ -1,18 +1,19 @@
 #include "test.hpp"
 
 Agent::Agent(void):	_state(0), _learningRate(0.3f), _discountFactor(0.9f),
-	_expRate(0.07f), _gamesPlayed(0), _nbWin(0), _winRatio(0.f)
+	_expRate(0.07f), _gamesPlayed(0), _nbWin(0), _winRatio(0.f),
+	_training(true)
 {}
 
-Agent::Agent(double lrRate, double disFactor):	_state(0),
-	_learningRate(lrRate), _discountFactor(disFactor), _expRate(0.07),
-	_gamesPlayed(0), _nbWin(0), _winRatio(0.f)
+Agent::Agent(double lrRate, double disFactor, double epsilon):	_state(0),
+	_learningRate(lrRate), _discountFactor(disFactor), _expRate(epsilon),
+	_gamesPlayed(0), _nbWin(0), _winRatio(0.f), _training(true), lastWasRandom(false)
 {}
 
 Agent::Agent(Agent const &rhs): _QTable(rhs._QTable), _state(rhs._state),
 	_learningRate(rhs._learningRate), _discountFactor(rhs._discountFactor),
 	_expRate(rhs._expRate), _gamesPlayed(rhs._gamesPlayed),
-	_nbWin(rhs._nbWin), _winRatio(rhs._winRatio)
+	_nbWin(rhs._nbWin), _winRatio(rhs._winRatio), _training(rhs._training)
 {}
 
 Agent::~Agent()
@@ -30,6 +31,7 @@ Agent	&Agent::operator=(Agent const &rhs)
 	this->_gamesPlayed = rhs._gamesPlayed;
 	this->_nbWin = rhs._nbWin;
 	this->_winRatio = rhs._winRatio;
+	this->_training = rhs._training;
 	return *this;
 }
 
@@ -51,32 +53,48 @@ int		Agent::getGamePlayed(void) const
 	return this->_gamesPlayed;
 }
 
+void	Agent::setTraining(bool training)
+{
+	this->_training = training;
+}
+
 void	Agent::setState(int state)
 {
 	this->_state = state;
 }
 
+int		Agent::getState(void) const
+{
+	return 	this->_state;
+}
+
+float	Agent::getExplRate(void) const
+{
+	return this->_expRate;
+}
+
 void	Agent::updateQTable(Interpreter &i)
 {
 	int	state = i.getState();
+	if (this->_training)
+	{
+		if (this->_QTable.find(state) == this->_QTable.end())
+			this->_QTable.emplace(state, std::array{0., 0., 0.});
+		
+		if (this->_QTable.find(this->_state) == this->_QTable.end())
+			this->_QTable.emplace(this->_state, std::array{0., 0., 0.});
 
-	if (this->_QTable.find(state) == this->_QTable.end())
-		this->_QTable.emplace(state, std::array{0., 0., 0.});
-	
-	if (this->_QTable.find(this->_state) == this->_QTable.end())
-		this->_QTable.emplace(this->_state, std::array{0., 0., 0.});
+		std::array<double, 3> &currentQLine = this->_QTable.at(this->_state);
+		std::array<double, 3> &newQLine = this->_QTable.at(state);
+		double &currentQVal = currentQLine[static_cast<size_t>(i.getAction())];
+		double	maxVal = std::max(newQLine[0], std::max(newQLine[1], newQLine[2]));
 
-	std::array<double, 3> &currentQLine = this->_QTable.at(this->_state);
-	std::array<double, 3> &newQLine = this->_QTable.at(state);
-	double &currentQVal = currentQLine[static_cast<size_t>(i.getAction())];
-	double	maxVal = std::max(newQLine[0], std::max(newQLine[1], newQLine[2]));
-
-	double target = i.getReward();
-	if (!i.isTerminal())
-    	target += this->_discountFactor * maxVal;
-	
-	currentQVal = (1 - this->_learningRate) * currentQVal + this->_learningRate * target;
-
+		double target = i.getReward();
+		if (!i.isTerminal())
+			target += this->_discountFactor * maxVal;
+		
+		currentQVal = (1 - this->_learningRate) * currentQVal + this->_learningRate * target;
+	}
 	this->_state = state;
 }
 
@@ -93,19 +111,26 @@ static Actions getMaxAction(const std::array<double, 3> &line)
 
 void Agent::decayExploration(void)
 {
-    this->_expRate = std::max(0.01f, this->_expRate * 0.9995f);
+	if (this->_training)
+    	this->_expRate = std::max(0.01f, this->_expRate * 0.9999f);
 }
 
 Actions	Agent::chooseAction(void)
 {
 	float randNb = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-	if (randNb < this->_expRate)
+	float rate = (this->_training) ? this->_expRate : 0.0;
+	if (randNb < rate)
+	{
+		this->lastWasRandom = true;
 		return static_cast<Actions>(rand() % 3);
+	}
 	if (this->_QTable.find(this->_state) != this->_QTable.end())
 	{
 		const std::array<double, 3> &stateLine = this->_QTable.at(this->_state);
+		this->lastWasRandom = false;
 		return getMaxAction(stateLine);
 	}
+	this->lastWasRandom = true;
 	return static_cast<Actions>(rand() % 3);
 }
 
@@ -145,9 +170,9 @@ void	Agent::parseModel(std::ifstream &file)
 
 void	Agent::importModel(std::string model)
 {
-	if (model.find(".") == std::string::npos)
+	if (model.rfind(".") == std::string::npos)
 		throw std::invalid_argument("Error: ext should be .mdl");
-	std::string ext(model.begin() + model.find("."), model.end());
+	std::string ext(model.begin() + model.rfind("."), model.end());
 	if (ext != ".mdl")
 		throw std::invalid_argument("Error: ext should be .mdl");
 	std::ifstream fd;
@@ -188,4 +213,5 @@ void	Agent::exportModel(std::string name)
 	}
 	fd.write(reinterpret_cast<const char *>(&end), sizeof(end));
 	fd.close();
+	std::cout << this->_QTable.size() << std::endl;
 }
