@@ -1,71 +1,81 @@
 #include "test.hpp"
-
 int main(void)
 {
 	try
 	{
+		srand(time(NULL));
 		Board	board(10, 10);
-		Agent	ai(0.05, 0.99, 0.9);
+		Agent	ai(0.1, 0.92, 0.9);
 		int		nbGames = 0;
-		int		nbWin = 0;
-		int		nbLoss = 0;
-		ai.importModel("0.9AppleDist0.3emptySquare4DangerSize.mdl");
-		ai.setState(Interpreter(board.getSnakeViews(), board.getSnakeSize(),
+		long sizeDied = 0, sizeStarved = 0;
+		int  nbDied = 0, nbStarved = 0, nbReach10 = 0;
+		ai.importModel("test3.mdl");
+		ai.setState(Interpreter(board.getSnakeViews(),
 				0, Actions::FORWARD, 0, 0).getState());
 		ai.setTraining(false);
-		int timeouts = 0;
-		while (nbGames < 100000)
+		int	nbMoves = 0, snakeSize = 0;
+		int max = 0, maxMove = 0;
+		int min = 0;
+		while (nbGames < 200000)
 		{
 			size_t moves = 0;
-			while (1)
+			while (moves < 2500)
 			{
-				if (moves > 500)
-				{
-					std::cout << "Game count = " << ai.getGamePlayed() << std::endl;
-					std::cout << "Session ratio = " << nbWin / (float)nbGames * 100 << '%' << std::endl;
-					std::cout << "Win ratio = " << ai.getWinRatio() * 100 << '%' << std::endl;
-					std::cout << "Win count = " << nbWin << std::endl;
-					std::cout << "Loss count = " << nbLoss << std::endl;
-					std::cout << "timeouts = " << timeouts << std::endl;
-					std::cout << "Epsilon = " << ai.getExplRate() << std::endl;
-					std::cout << "Snake size = " << board.getSnakeSize() << std::endl;
-					std::cout << board << std::endl;
-					std::cout << "[H[2J[3J";
-					usleep(500000);
-				}
-				// std::cout << board << std::endl;
-				// std::cout << "[H[2J[3J";
-				// usleep(50000);
 				Actions act = ai.chooseAction();
 				double reward = board.snakeMove(act);
-				Interpreter t(board.getSnakeViews(), board.getSnakeSize(), reward, act,
+				Interpreter t(board.getSnakeViews(), reward, act,
 							board.hasWon(), board.hasLost());
 				ai.updateQTable(t);
 				if (board.hasLost())
-				{
-					(void)nbLoss++;
 					break ;
-				}
-				if (board.hasWon())
-				{
-					(void)nbWin++;
-					break ;
-				}
 				moves++;
 			}
-			// if (moves == 2000)
-			// {
-			// 	(void)nbLoss++;
-			// 	(void)timeouts++;
-			// }
+			int sz = board.getSnakeSize();
+			if (sz >= 10)
+				nbReach10++;
+			if (board.hasLost())
+			{
+				nbDied++;
+				sizeDied += sz;
+			}
+			else
+			{
+				nbStarved++;
+				sizeStarved += sz;
+			}
+			min = (!min) ? board.getSnakeSize() : std::min(min, (int)board.getSnakeSize());
+			max = std::max(max, (int)board.getSnakeSize());
+			snakeSize += board.getSnakeSize();
+			nbMoves += moves;
 			nbGames++;
+			if (moves < 2500)
+				maxMove = std::max(maxMove, (int)moves);
+			
 			ai.decayExploration();
-			ai.incrementTotalGames(board.hasWon());
+			ai.incrementTotalGames();
 			board.reset();
-			ai.setState(Interpreter(board.getSnakeViews(), board.getSnakeSize(),
+			ai.setState(Interpreter(board.getSnakeViews(),
 				0, Actions::FORWARD, 0, 0).getState());
+			if (!(nbGames % 1000))
+			{
+				std::cout << "[H[2J[3J";
+				std::cout << "Train count = " << ai.getGamePlayed() << std::endl;
+				std::cout << "Game count = " << nbGames << std::endl;
+				std::cout << "nbReach10 = " << nbReach10 << std::endl;
+				std::cout << "nbDied = " << nbDied << std::endl;
+				std::cout << "avg sizeDied = " << sizeDied / (float)nbDied<< std::endl;
+				std::cout << "nbStarved = " << nbStarved << std::endl;
+				std::cout << "avg sizeStarved = " << sizeStarved / (float)nbStarved << std::endl;
+				std::cout << "Session ratio = " << nbReach10 / (float)nbGames * 100 << '%' << std::endl;
+				std::cout << "avg nbMoves = " << nbMoves / (float)nbGames << std::endl;
+				std::cout << "max nbMoves = " << maxMove << std::endl;
+				std::cout << "avg Snake size = " << snakeSize / (float)nbGames << std::endl;
+				std::cout << "max Snake size = " << max << std::endl;
+				std::cout << "min Snake size = " << min << std::endl;
+				std::cout << "Epsilon = " << ai.getExplRate() << std::endl;
+			}
 		}
-		ai.exportModel("0.9AppleDist0.3emptySquare4DangerSize.mdl");
+		ai.exportModel("test3.mdl");
 	}
 	catch(const std::exception& e)
 	{

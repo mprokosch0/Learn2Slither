@@ -58,7 +58,6 @@ void	Board::prepareGrid(void)
 Board::Board(size_t rows, size_t cols): _rows(rows + 2), _cols(cols + 2),
 	_lose(false), _win(false)
 {
-	srand(time(NULL));
 	if (rows < 10 || rows > 40)
 		throw std::invalid_argument("Board: error: rows size must be between"
 			 "10 and 40 (included) instead got: " + std::to_string(rows));
@@ -202,12 +201,7 @@ double	Board::snakeMove(Actions dir)
 		if (this->_snake.size() > 1)
 			this->_grid[snakePos[1].second][snakePos[1].first] = GridValues::SNAKE_BODY;
 	}
-	if (!this->_lose && this->_snake.size() == 10)
-	{
-		this->_win = true;
-		reward = 50.0;
-	}
-	else if (!this->_snake.size())
+	if (!this->_snake.size())
 	{
 		this->_lose = true;
 		reward = -50.0;
@@ -251,6 +245,31 @@ static std::string getGridVal(GridValues val)
 			return "\033[90m0\033[0m";
 	}
 }
+
+// std::ostream &operator<<(std::ostream &os, const Board &board)
+// {
+// 	const std::vector<std::vector<GridValues>> &grid  = board.getGrid();
+// 	// const std::pair<int, int> &hPos = board.getSnakeHeadPos();
+
+// 	// const int x = hPos.first;
+// 	// const int y = hPos.second;
+
+
+// 	for (size_t i = 0; i < grid.size(); i++)
+// 	{
+// 		os << '[';
+// 		for (size_t j = 0; j < grid[i].size(); j++)
+// 		{
+// 			os << getGridVal(grid[i][j]);
+// 			if (j + 1 != grid[i].size())
+// 				os << " ";
+// 		}
+// 		os << ']';
+// 		if (i + 1 != grid.size())
+// 			os << std::endl;
+// 	}
+// 	return os;
+// }
 
 std::ostream &operator<<(std::ostream &os, const Board &board)
 {

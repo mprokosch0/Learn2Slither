@@ -16,7 +16,7 @@ Engine::Engine(size_t winWidth, size_t winHeight): _width(winWidth),
 			throw std::runtime_error("Mlx new window function failed");
 		}
 		this->_img.init(this->_mlx, winWidth, winHeight);
-		this->_screen = std::make_unique<TitleScreen>(this->_width, this->_height);
+		this->_screen = std::make_unique<TitleScreen>(this->_width, this->_height, *this);
 	}
 	catch(const std::exception& e)
 	{
@@ -99,12 +99,12 @@ int		Engine::mouseMoveTrampoline(int x, int y, void *self)
 
 void	Engine::mouseDown(int button, int x, int y)
 {
-	this->_screen->onMouseDown(button, x, y, *this);
+	this->_screen->onMouseDown(button, x, y);
 }
 
 void	Engine::mouseUp(int button, int x, int y)
 {
-	this->_screen->onMouseUp(button, x, y, *this);
+	this->_screen->onMouseUp(button, x, y);
 }
 
 void	Engine::mouseMove(int x, int y)

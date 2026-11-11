@@ -4,15 +4,15 @@
 
 # include <iostream>
 # include <string>
-# include <algorithm>
 # include <array>
+# include <vector>
+# include <algorithm>
 # include <cstring>
 # include <unistd.h>
 # include <unordered_map>
 # include <map>
 # include <sstream>
 # include <fstream>
-# include <vector>
 # include <cstdlib>
 
 # define INT_MIN -2147483648
@@ -45,9 +45,9 @@ enum class GridValues
 class Snake
 {
 	private:
-		std::vector<std::pair<int, int>>	_pos;
-		size_t								_initSize;
-		Directions							_orientation;
+		std::vector<std::pair<int, int>>					_pos;
+		size_t												_initSize;
+		Directions											_orientation;
 		static	std::array<std::array<Directions, 3>, 4>	_orienTable;
 	
 	public:
@@ -76,17 +76,18 @@ class Snake
 class Board
 {
 	private:
-    	std::vector<std::vector<GridValues>> _grid;
-		size_t								_rows;
-		size_t								_cols;
-		Snake								_snake;
-		bool								_lose;
-		bool								_win;
+    	std::vector<std::vector<GridValues>>	_grid;
+		size_t									_rows;
+		size_t									_cols;
+		Snake									_snake;
+		bool									_lose;
+		bool									_win;
 
 	private:
 		void	prepareGrid(void);
 		void	genApple(bool apple);
 		void	genSnake(void);
+		int		nearestGreenDist(void) const;
 
 	
 	public:
@@ -113,10 +114,10 @@ class Board
 class Interpreter
 {
 	private:
-		std::array<int, 4>	_danger; 		//if danger is adjacent on the direction
+		std::array<int, 3>	_danger; 		//if danger is adjacent on the direction
+		std::array<int, 3>	_snakeBody;		//if snkaeBody is adjacent on the direction
 		std::array<int, 4>	_greenApple;	//if green apple in direction
 		std::array<int, 4>	_redApple;		//if red apple in direction
-		std::array<bool, 2>	_snakeSize;		//diff value depending the snake length
 		double				_reward;
 		Actions				_action;
 		bool				_win;
@@ -124,8 +125,8 @@ class Interpreter
 
 	public:
 		Interpreter(void);
-		Interpreter(const std::vector<std::vector<GridValues>> &views, size_t snakeSize,
-						double reward, Actions action, bool win, bool lose);
+		Interpreter(const std::vector<std::vector<GridValues>> &views,
+			double reward, Actions action, bool win, bool lose);
 		Interpreter(Interpreter const &rhs);
 		~Interpreter();
 	
@@ -148,8 +149,6 @@ class Agent
 		float											_discountFactor;
 		float											_expRate;
 		u_int32_t										_gamesPlayed;
-		int												_nbWin;
-		float											_winRatio;
 		bool											_training;
 	
 	private:
@@ -163,15 +162,14 @@ class Agent
 		~Agent();
 	
 	public:
-		bool				lastWasRandom;
 		Agent	&operator=(Agent const &rhs);
 	
 	public:
 		void	setState(int state);
 		int 	getState(void) const;
 		void	setTraining(bool training);
-		void	incrementTotalGames(bool win);
-		float	getWinRatio(void);
+		bool	isTraining(void) const;
+		void	incrementTotalGames(void);
 		int		getGamePlayed(void) const;
 		float	getExplRate(void) const;
 		void	updateQTable(Interpreter &i);

@@ -1,15 +1,15 @@
 #include "test.hpp"
 
-Interpreter::Interpreter(): _danger({0}), _greenApple({0}),
-	_redApple({0}), _snakeSize({false}), _reward(0), _action(Actions::FORWARD),
+Interpreter::Interpreter(): _danger({0}), _snakeBody({0}), _greenApple({0}),
+	_redApple({0}), _reward(0), _action(Actions::FORWARD),
 	_win(false), _lose(false)
 {}
 
 Interpreter::Interpreter(const std::vector<std::vector<GridValues>> &views,
-	size_t snakeSize, double reward, Actions action,
+	double reward, Actions action,
 	bool win, bool lose):
-	_danger({0}), _greenApple({0}), _redApple({0}),
-	_snakeSize({false}), _reward(reward), _action(action), _win(win), _lose(lose)
+	_danger({0}), _snakeBody({0}), _greenApple({0}), _redApple({0}),
+	_reward(reward), _action(action), _win(win), _lose(lose)
 {
 	if (views.size())
 	{
@@ -18,16 +18,31 @@ Interpreter::Interpreter(const std::vector<std::vector<GridValues>> &views,
 			for (size_t j = 0; j < views[i].size(); j++)
 			{
 				GridValues val = views[i][j];
-				if (val == GridValues::WALL || val == GridValues::SNAKE_BODY
-					|| (snakeSize == 1 && val == GridValues::RED_APPLE))
+				int correct = (i == 3) ? -1 : 0;
+				if (val == GridValues::WALL)
 				{
-					if (j == 0)
-						this->_danger[i] = 3;
-					else if (j <= 2)
-						this->_danger[i] = 2;
-					else
-						this->_danger[i] = 1;
-					break ;
+					if (i != 2)
+					{
+						if (j == 0)
+							this->_danger[i + correct] = 3;
+						else if (j <= 2)
+							this->_danger[i + correct] = 2;
+						else
+							this->_danger[i + correct] = 1;
+						break ;
+					}
+				}
+				else if (val == GridValues::SNAKE_BODY)
+				{
+					if (i != 2)
+					{
+						if (j == 0)
+							this->_snakeBody[i + correct] = 3;
+						else if (j <= 2)
+							this->_snakeBody[i + correct] = 2;
+						else
+							this->_snakeBody[i + correct] = 1;
+					}
 				}
 				else if (val == GridValues::GREEN_APPLE && !this->_greenApple[i])
 				{
@@ -50,24 +65,12 @@ Interpreter::Interpreter(const std::vector<std::vector<GridValues>> &views,
 			}
 		}
 	}
-
-	if (snakeSize <= 1)
-		;
-	else if (snakeSize >= 2 && snakeSize < 5)
-		this->_snakeSize[0] = true;
-	else if (snakeSize >= 5 && snakeSize < 9)
-		this->_snakeSize[1] = true;
-	else
-	{
-		this->_snakeSize[0] = true;
-		this->_snakeSize[1] = true;
-	}
 }
 
 Interpreter::Interpreter(Interpreter const &rhs): _danger(rhs._danger),
-		_greenApple(rhs._greenApple), _redApple(rhs._redApple),
-		_snakeSize(rhs._snakeSize), _reward(rhs._reward), _action(rhs._action),
-		 _win(rhs._win), _lose(rhs._lose)
+		_snakeBody(rhs._snakeBody), _greenApple(rhs._greenApple),
+		_redApple(rhs._redApple), _reward(rhs._reward), _action(rhs._action),
+		_win(rhs._win), _lose(rhs._lose)
 {}
 
 Interpreter::~Interpreter()
@@ -78,9 +81,9 @@ Interpreter	&Interpreter::operator=(Interpreter const &rhs)
 	if (this == &rhs)
 		return *this;
 	this->_danger = rhs._danger;
+	this->_snakeBody = rhs._snakeBody;
 	this->_greenApple = rhs._greenApple;
 	this->_redApple = rhs._redApple;
-	this->_snakeSize = rhs._snakeSize;
 	this->_reward = rhs._reward;
 	this->_action = rhs._action;
 	this->_win = rhs._win;
@@ -112,6 +115,11 @@ int		Interpreter::getState(void) const
 		res |= this->_danger[j] << i;
 		i += 2;
 	}
+	for (size_t j = 0; j < this->_snakeBody.size(); j++)
+	{
+		res |= this->_snakeBody[j] << i;
+		i += 2;
+	}
 	for (size_t j = 0; j < this->_greenApple.size(); j++)
 	{
 		res |= this->_greenApple[j] << i;
@@ -122,7 +130,5 @@ int		Interpreter::getState(void) const
 		res |= this->_redApple[j] << i;
 		i += 2;
 	}
-	for (size_t j = 0; j < this->_snakeSize.size(); j++)
-		res |= this->_snakeSize[j] << i++;
 	return res;
 }

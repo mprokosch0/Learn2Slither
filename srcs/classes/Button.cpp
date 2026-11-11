@@ -4,7 +4,7 @@ int Button::_borderWidth = 2;
 
 Button::Button(box dim, int color, int hoverColor, int borderColor,
 	int borderHoverColor, Text text, bool active,
-	std::function<void(Engine &)> func):
+	std::function<void()> func):
 	_text(text), _dimentions(dim), _color(color), _hoverColor(hoverColor),
 	_borderColor(borderColor), _borderHoverColor(borderHoverColor),
 	_hover(false), _active(active), _onClickFunction(func)
@@ -102,10 +102,10 @@ void	Button::desactivate(void)
 	this->_active = false;
 }
 
-void	Button::click(Engine &engine) const
+void	Button::click(void) const
 {
 	if (this->_active)
-		this->_onClickFunction(engine);
+		this->_onClickFunction();
 }
 
 void	Button::render(Image &img) const

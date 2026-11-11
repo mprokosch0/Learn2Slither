@@ -7,6 +7,7 @@ extern "C"
 	# include "../minilibx-linux/mlx.h"
 }
 
+# include "Agent.hpp"
 # include <iostream>
 # include <string>
 # include <memory>
@@ -143,12 +144,12 @@ class Button
 		int								_borderHoverColor;
 		bool							_hover;
 		bool							_active;
-		std::function<void(Engine &)>	_onClickFunction;
+		std::function<void()>	_onClickFunction;
 	
 	public:
 		Button(box dim, int color, int hoverColor, int borderColor,
 			int borderHovercolor, Text text, bool active,
-			std::function<void(Engine &)> func);
+			std::function<void()> func);
 		Button(Button const &rhs);
 		~Button();
 	
@@ -156,7 +157,7 @@ class Button
 		Button	&operator=(Button const &rhs);
 	
 	public:
-		void		click(Engine &engine) const;
+		void		click(void) const;
 		void		render(Image &img) const;
 		void		renderClip(Image &img, box &clip) const;
 		void		clearHover(void);
@@ -202,8 +203,8 @@ class IScreen
 		virtual void update() = 0;
 		virtual void render(Image &img) = 0;
 		virtual void onKey(int keycode) = 0;
-		virtual void onMouseDown(int button, int x, int y, Engine &engine) = 0;
-		virtual void onMouseUp(int button, int x, int y, Engine &engine) = 0;
+		virtual void onMouseDown(int button, int x, int y) = 0;
+		virtual void onMouseUp(int button, int x, int y) = 0;
 		virtual void onMouseMove(int x, int y) = 0;
 };
 
@@ -211,14 +212,14 @@ class TitleScreen : public IScreen
 {
 
 	public:
-		TitleScreen(size_t width, size_t height);
+		TitleScreen(size_t width, size_t height, Engine &engine);
 
 	public:
 		void	update() override;
 		void	render(Image &img) override;
 		void	onKey(int keycode) override;
-		void	onMouseDown(int button, int x, int y, Engine &engine) override;
-		void	onMouseUp(int button, int x, int y,Engine &engine) override;
+		void	onMouseDown(int button, int x, int y) override;
+		void	onMouseUp(int button, int x, int y) override;
 		void	onMouseMove(int x, int y) override;
 };
 
@@ -230,6 +231,8 @@ class SelectScreen : public IScreen
 		std::vector<std::pair<Text, std::array<int, 2>>>	_texts;
 		std::vector<Rectangle>								_rectangles;
 		Rectangle											_fileListRect;
+		std::shared_ptr<Agent>								_selectedFile;
+		uintmax_t											_selectedFileSize;
 
 	private:
 		void	addEntry(void);
@@ -240,14 +243,14 @@ class SelectScreen : public IScreen
 
 
 	public:
-		SelectScreen(size_t width, size_t height);
+		SelectScreen(size_t width, size_t height, Engine &engine);
 
 	public:
 		void	update() override;
 		void	render(Image &img) override;
 		void	onKey(int keycode) override;
-		void	onMouseDown(int button, int x, int y, Engine &engine) override;
-		void	onMouseUp(int button, int x, int y,Engine &engine) override;
+		void	onMouseDown(int button, int x, int y) override;
+		void	onMouseUp(int button, int x, int y) override;
 		void	onMouseMove(int x, int y) override;
 };
 

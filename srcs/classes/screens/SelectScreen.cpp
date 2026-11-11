@@ -1,17 +1,18 @@
 #include "learn2Slither.hpp"
 
-SelectScreen::SelectScreen(size_t width, size_t height): IScreen(width, height)
+SelectScreen::SelectScreen(size_t width, size_t height, Engine &engine): IScreen(width, height),
+	_selectedFileSize(0)
 {
 	this->_buttons.emplace_back((box){30, 15, 150, 30}, 0x1A2113, 0x8DB600,
 			0x8DB600, 0x8DB600, Text("Back", 1.f, 0xC5E063, 0x12170D), true,
-			[width, height](Engine &engine)
+			[width, height, &engine]()
 			{
-				engine.prepareNextScreen(std::make_unique<TitleScreen>(width, height));
+				engine.prepareNextScreen(std::make_unique<TitleScreen>(width, height, engine));
 			});
 	this->_buttons.emplace_back((box){991, (int)this->_height - 60, 150, 40},
 			0x8DB600, 0xA8D41F, 0x8DB600, 0x8DB600,
 			Text("Launch", 1.f, 0x12170D, 0x12170D), true,
-			[](Engine &engine)
+			[&engine]()
 			{
 				(void)engine;
 			});
@@ -33,6 +34,10 @@ SelectScreen::SelectScreen(size_t width, size_t height): IScreen(width, height)
 	this->_texts.emplace_back(std::make_pair(
 		Text("Choose a model :", 1.f, 0x9AA88A, 0x9AA88A),
 		std::array<int, 2>{35, 115}));
+
+	this->_texts.emplace_back(std::make_pair(
+		Text("Selected model :", 1.f, 0x9AA88A, 0x9AA88A),
+		std::array<int, 2>{360, 115}));
 
 	this->_texts.emplace_back(std::make_pair(
 		Text("Configure the session :", 1.f, 0x9AA88A, 0x9AA88A),
@@ -85,31 +90,40 @@ void	SelectScreen::addEntry(void)
 		ext = std::string(ext.begin() + index, ext.end());
 		std::string filename = getFilename(dirEntry.path());
 		if (!std::filesystem::is_regular_file(dirEntry)
-			|| ext != ".txt" || isInVec(filename, this->_files) != -1)
+			|| ext != ".mdl" || isInVec(filename, this->_files) != -1)
 			continue ;
-		if (!this->_files.size())
-		{
-			this->_files.emplace_back((box){40, 135 + (int)this->_files.size() * 50, 250, 40},
-				0x283322, 0x2F3C28, 0x4a5a3a, 0x6B8E00,
-				Text(filename, 1.f, 0xE6EDD8, 0xC5E063), true,
-				[](Engine &engine)
-				{
-					(void)engine;
-				}
-				);
-		}
-		else
+		int y = 135 + (int)this->_files.size() * 50;
+		if (this->_files.size())
 		{
 			box ldims = this->_files.back().getDimentions();
-			this->_files.emplace_back((box){40, ldims.y + ldims.h + 10, 250, 40},
-				0x283322, 0x2F3C28, 0x4a5a3a, 0x6B8E00,
-				Text(filename, 1.f, 0xE6EDD8, 0xC5E063), true,
-				[](Engine &engine)
-				{
-					(void)engine;
-				}
-				);
+			y = ldims.y + ldims.h + 10;
 		}
+		std::string path = dirEntry.path();
+		box	pos = {40, y, 305, 40};
+		int color = 0x283322;
+		int hoverColor = 0x2F3C28;
+		int borderColor = 0x4a5a3a;
+		int hoverBorderColor = 0x6B8E00;
+		Text txt(filename, 1.f, 0xE6EDD8, 0xC5E063);
+		bool active = true;
+		uintmax_t fileSize = dirEntry.file_size();
+		std::function<void()> function = [this, path, filename, fileSize]()
+												{
+													try
+													{
+														Agent a(path, filename);
+														this->_selectedFile = std::make_shared<Agent>(a);
+														this->_selectedFileSize = fileSize;
+													}
+													catch(const std::exception& e)
+													{
+														this->_selectedFile = std::make_shared<Agent>(0, 0, 0, filename);
+														std::cerr << e.what() << '\n';
+													}
+													
+												};
+		this->_files.emplace_back(pos, color, hoverColor, borderColor,
+			hoverBorderColor, txt, active, function);
 	}
 }
 
@@ -153,7 +167,7 @@ void	SelectScreen::updateFilesVector(void)
 		size_t index = ext.rfind('.');
 		ext = std::string(ext.begin() + index, ext.end());
 
-		if (std::filesystem::is_regular_file(dirEntry) && ext == ".txt")
+		if (std::filesystem::is_regular_file(dirEntry) && ext == ".mdl")
 			nbEntry++;
 	}
 	if (nbEntry == this->_files.size())
@@ -211,7 +225,7 @@ void	SelectScreen::scrollButtonsFiles(int button)
 	return ;
 }
 
-void	SelectScreen::onMouseDown(int button, int x, int y, Engine &engine)
+void	SelectScreen::onMouseDown(int button, int x, int y)
 {
 	(void)x, (void)y;
 	for (Button &but : this->_buttons)
@@ -231,7 +245,7 @@ void	SelectScreen::onMouseDown(int button, int x, int y, Engine &engine)
 		{
 			if (but.isMouseOn())
 			{
-				but.click(engine);
+				but.click();
 				break ;
 			}
 		}
@@ -239,7 +253,7 @@ void	SelectScreen::onMouseDown(int button, int x, int y, Engine &engine)
 		{
 			if (file.isMouseOn())
 			{
-				file.click(engine);
+				file.click();
 				break ;
 			}
 		}
@@ -258,9 +272,9 @@ void	SelectScreen::onMouseDown(int button, int x, int y, Engine &engine)
 	updateHooks(button, HOOK_DOWN);
 }
 
-void	SelectScreen::onMouseUp(int button, int x, int y, Engine &engine)
+void	SelectScreen::onMouseUp(int button, int x, int y)
 {
-	(void)x, (void)y, (void)engine;
+	(void)x, (void)y;
 	for (Button &but : this->_buttons)
 	{
 		but.clearHover();
@@ -317,9 +331,66 @@ void	SelectScreen::render(Image &img)
 		pair.first.render(pair.second[0], pair.second[1], img);
 
 	img.putVLine(this->_width / 2, 60, this->_height, 0x3A4A2E, 3);
+	img.putVLine(355, 125, 720, 0x3A4A2E, 3);
 
 	for (Button &but : this->_buttons)
 		but.render(img);
 	
 	renderScrollList(img);
+
+	if (this->_selectedFile)
+	{
+		Text txt(this->_selectedFile->getName(), 1.f, 0xC8E65A, 0xC8E65A);
+		txt.render(363, 145, img, Text::HAlign::Left, Text::VAlign::Center);
+		img.putHLine(160, 355, 681, 0x3A4A2C, 3);
+		if (!this->_selectedFile->getGamePlayed())
+		{
+			Text err("Invalid model file", 1.5f, 0xD9644A, 0xD9644A);
+			err.render(508, 205, img, Text::HAlign::Center, Text::VAlign::Center);
+			return ;
+		}
+		Rectangle rTrain((box){363, 191, 308, 80}, 0x205930, 2, 0x3A4A2C);
+		rTrain.render(img);
+		Text train("Training", 1.2f, 0xA6D98A, 0xA6D98A);
+		Text session("Sessions", 0.9f, 0xD0D8C4, 0xD0D8C4);
+		Text nbSessions(std::to_string(this->_selectedFile->getGamePlayed()), 0.9f, 0xE8F0D8, 0xE8F0D8);
+		train.render(368, 201, img, Text::HAlign::Left, Text::VAlign::Top);
+		session.render(370, 251, img, Text::HAlign::Left, Text::VAlign::Center);
+		nbSessions.render(662, 251, img, Text::HAlign::Right, Text::VAlign::Center);
+
+		Rectangle rParam((box){363, 301, 308, 120}, 0x205930, 2, 0x3A4A2C);
+		rParam.render(img);
+		Text param("HYPERPARAMETERS", 1.2f, 0xA6D98A, 0xA6D98A);
+		Text tlrRate("Learning rate", 0.9f, 0xD0D8C4,0xD0D8C4);
+		Text tdiscountF("Discount factor", 0.9f, 0xD0D8C4,0xD0D8C4);
+		Text tepsilon("Epsilon", 0.9f, 0xD0D8C4,0xD0D8C4);
+		Text lrRate(std::format("{:.2f}", this->_selectedFile->getLrRate()), 0.9f, 0xD0D8C4,0xD0D8C4);
+		Text discountF(std::format("{:.2f}", this->_selectedFile->getDiscFacor()), 0.9f, 0xD0D8C4,0xD0D8C4);
+		Text epsilon(std::format("{:.2f}", this->_selectedFile->getEpsilon()), 0.9f, 0xD0D8C4,0xD0D8C4);
+		param.render(368, 311, img, Text::HAlign::Left, Text::VAlign::Top);
+		tlrRate.render(370, 361, img, Text::HAlign::Left, Text::VAlign::Center);
+		lrRate.render(662, 361, img, Text::HAlign::Right, Text::VAlign::Center);
+		tdiscountF.render(370, 381, img, Text::HAlign::Left, Text::VAlign::Center);
+		discountF.render(662, 381, img, Text::HAlign::Right, Text::VAlign::Center);
+		tepsilon.render(370, 401, img, Text::HAlign::Left, Text::VAlign::Center);
+		epsilon.render(662, 401, img, Text::HAlign::Right, Text::VAlign::Center);
+
+		Rectangle rQTable((box){363, 451, 308, 120}, 0x205930, 2, 0x3A4A2C);
+		rQTable.render(img);
+		Text Qtbl("Q-Table", 1.2f, 0xA6D98A, 0xA6D98A);
+		Text tQtableSize("States", 0.9f, 0xD0D8C4, 0xD0D8C4);
+		Text tN0Entries("Non-zero entries", 0.9f, 0xD0D8C4, 0xD0D8C4);
+		Text tFSize("File size", 0.9f, 0xD0D8C4, 0xD0D8C4);
+		Text QtableSize(std::to_string(this->_selectedFile->getQTableSize()), 0.9f, 0xD0D8C4, 0xD0D8C4);
+		Text N0Entries(std::to_string(this->_selectedFile->getQTableN0Entries()), 0.9f, 0xD0D8C4, 0xD0D8C4);
+		Text FSize(std::format("{:.2f}", this->_selectedFileSize / 1024.0) + " KB", 0.9f, 0xD0D8C4, 0xD0D8C4);
+
+		Qtbl.render(368, 461, img, Text::HAlign::Left, Text::VAlign::Top);
+		tQtableSize.render(370, 511, img, Text::HAlign::Left, Text::VAlign::Center);
+		QtableSize.render(662, 511, img, Text::HAlign::Right, Text::VAlign::Center);
+		tN0Entries.render(370, 531, img, Text::HAlign::Left, Text::VAlign::Center);
+		N0Entries.render(662, 531, img, Text::HAlign::Right, Text::VAlign::Center);
+		tFSize.render(370, 551, img, Text::HAlign::Left, Text::VAlign::Center);
+		FSize.render(661, 551, img, Text::HAlign::Right, Text::VAlign::Center);
+	}
 }

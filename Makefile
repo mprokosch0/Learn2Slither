@@ -15,9 +15,13 @@ SRCS =	srcs/main.cpp \
 		srcs/classes/Text.cpp \
 		srcs/classes/Rectangle.cpp \
 		srcs/classes/Button.cpp \
-		srcs/classes/IScreen.cpp \
-		srcs/classes/TitleScreen.cpp \
-		srcs/classes/SelectScreen.cpp 
+		srcs/classes/screens/IScreen.cpp \
+		srcs/classes/screens/TitleScreen.cpp \
+		srcs/classes/screens/SelectScreen.cpp \
+		srcs/classes/game/Snake.cpp \
+		srcs/classes/game/Board.cpp \
+		srcs/classes/agent/Agent.cpp \
+		srcs/classes/agent/Interpreter.cpp
 
 OBJS_DIR = objs
 

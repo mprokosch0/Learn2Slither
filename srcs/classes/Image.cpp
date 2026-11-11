@@ -209,7 +209,7 @@ void	Image::putHLine(int y, int xStart, int xEnd, int color, size_t width)
 		return ;
 
 	box b = {.x = xStart, .y = y - static_cast<int>(width) / 2,
-				.w = xEnd - xStart, .h = static_cast<int>(width) / 2};
+				.w = xEnd - xStart, .h = static_cast<int>(width)};
 	putRectangle(b, color);
 }
 

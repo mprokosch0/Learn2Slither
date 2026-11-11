@@ -1,19 +1,18 @@
 #include "test.hpp"
 
-Agent::Agent(void):	_state(0), _learningRate(0.3f), _discountFactor(0.9f),
-	_expRate(0.07f), _gamesPlayed(0), _nbWin(0), _winRatio(0.f),
-	_training(true)
+Agent::Agent(void):	_state(0), _learningRate(0.1f), _discountFactor(0.92f),
+	_expRate(0.9f), _gamesPlayed(0), _training(true)
 {}
 
 Agent::Agent(double lrRate, double disFactor, double epsilon):	_state(0),
 	_learningRate(lrRate), _discountFactor(disFactor), _expRate(epsilon),
-	_gamesPlayed(0), _nbWin(0), _winRatio(0.f), _training(true), lastWasRandom(false)
+	_gamesPlayed(0), _training(true)
 {}
 
 Agent::Agent(Agent const &rhs): _QTable(rhs._QTable), _state(rhs._state),
 	_learningRate(rhs._learningRate), _discountFactor(rhs._discountFactor),
 	_expRate(rhs._expRate), _gamesPlayed(rhs._gamesPlayed),
-	_nbWin(rhs._nbWin), _winRatio(rhs._winRatio), _training(rhs._training)
+	_training(rhs._training)
 {}
 
 Agent::~Agent()
@@ -29,23 +28,14 @@ Agent	&Agent::operator=(Agent const &rhs)
 	this->_discountFactor = rhs._discountFactor;
 	this->_state = rhs._state;
 	this->_gamesPlayed = rhs._gamesPlayed;
-	this->_nbWin = rhs._nbWin;
-	this->_winRatio = rhs._winRatio;
 	this->_training = rhs._training;
 	return *this;
 }
 
-void	Agent::incrementTotalGames(bool win)
+void	Agent::incrementTotalGames(void)
 {
-	this->_gamesPlayed++;
-	if (win)
-		this->_nbWin++;
-}
-
-float	Agent::getWinRatio(void)
-{
-	this->_winRatio = static_cast<float>(this->_nbWin) / static_cast<float>(this->_gamesPlayed);
-	return this->_winRatio;
+	if (this->_training)
+		this->_gamesPlayed++;
 }
 
 int		Agent::getGamePlayed(void) const
@@ -56,6 +46,11 @@ int		Agent::getGamePlayed(void) const
 void	Agent::setTraining(bool training)
 {
 	this->_training = training;
+}
+
+bool	Agent::isTraining(void) const
+{
+	return this->_training;
 }
 
 void	Agent::setState(int state)
@@ -70,7 +65,10 @@ int		Agent::getState(void) const
 
 float	Agent::getExplRate(void) const
 {
-	return this->_expRate;
+	if (this->_training)
+		return this->_expRate;
+	else
+		return 0.f;
 }
 
 void	Agent::updateQTable(Interpreter &i)
@@ -120,17 +118,12 @@ Actions	Agent::chooseAction(void)
 	float randNb = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
 	float rate = (this->_training) ? this->_expRate : 0.0;
 	if (randNb < rate)
-	{
-		this->lastWasRandom = true;
 		return static_cast<Actions>(rand() % 3);
-	}
 	if (this->_QTable.find(this->_state) != this->_QTable.end())
 	{
 		const std::array<double, 3> &stateLine = this->_QTable.at(this->_state);
-		this->lastWasRandom = false;
 		return getMaxAction(stateLine);
 	}
-	this->lastWasRandom = true;
 	return static_cast<Actions>(rand() % 3);
 }
 
@@ -146,8 +139,6 @@ void	Agent::parseModel(std::ifstream &file)
 	std::string buffer;
 	
 	readBytes(file, &this->_gamesPlayed, sizeof(this->_gamesPlayed));
-	readBytes(file, &this->_nbWin, sizeof(this->_nbWin));
-	readBytes(file, &this->_winRatio, sizeof(this->_winRatio));
 	readBytes(file, &this->_learningRate, sizeof(this->_learningRate));
 	readBytes(file, &this->_discountFactor, sizeof(this->_discountFactor));
 	readBytes(file, &this->_expRate, sizeof(this->_expRate));
@@ -191,10 +182,7 @@ void	Agent::exportModel(std::string name)
 	fd.open(name, std::ios::binary);
 	if (!fd.is_open())
 		throw std::invalid_argument("Error: could not create file: " + name);
-	this->getWinRatio();
 	fd.write(reinterpret_cast<const char *>(&this->_gamesPlayed), sizeof(this->_gamesPlayed));
-	fd.write(reinterpret_cast<const char *>(&this->_nbWin), sizeof(this->_nbWin));
-	fd.write(reinterpret_cast<const char *>(&this->_winRatio), sizeof(this->_winRatio));
 	fd.write(reinterpret_cast<const char *>(&this->_learningRate), sizeof(this->_learningRate));
 	fd.write(reinterpret_cast<const char *>(&this->_discountFactor), sizeof(this->_discountFactor));
 	fd.write(reinterpret_cast<const char *>(&this->_expRate), sizeof(this->_expRate));
@@ -213,5 +201,4 @@ void	Agent::exportModel(std::string name)
 	}
 	fd.write(reinterpret_cast<const char *>(&end), sizeof(end));
 	fd.close();
-	std::cout << this->_QTable.size() << std::endl;
 }
