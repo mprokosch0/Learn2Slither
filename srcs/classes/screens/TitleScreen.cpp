@@ -4,14 +4,14 @@ TitleScreen::TitleScreen(size_t width, size_t height, Engine &engine): IScreen(w
 {
 	this->_buttons.emplace_back((box){(static_cast<int>(width) / 2) - 100,
 			(static_cast<int>(height) / 2) + 75, 200, 50}, 0x407560, 0x407560,
-			0x0, 0xffffff, Text("Play", 1.f, 0x0, 0x0), true,
+			0x0, 0xffffff, 0x407560, 0x407560, Text("Play", 1.f, 0x0, 0x0), true,
 			[width, height, &engine]()
 			{
 				engine.prepareNextScreen(std::make_unique<SelectScreen>(width, height, engine));
 			});
 	this->_buttons.emplace_back((box){(static_cast<int>(width) / 2) - 100,
 			(static_cast<int>(height) / 2) + 150, 200, 50}, 0x407560, 0x407560,
-			0x0, 0xffffff, Text("Quit", 1.f, 0x0, 0x0), true,
+			0x0, 0xffffff, 0x407560, 0x407560, Text("Quit", 1.f, 0x0, 0x0), true,
 			[&engine]()
 			{
 				engine.quit();

@@ -32,6 +32,12 @@ Text	&Text::operator=(Text const &rhs)
 	return *this;
 }
 
+void	Text::setText(std::string text)
+{
+	this->_text = text;
+	this->_width = Image::getStringSize(text, this->_zoom);
+}
+
 const std::string	&Text::getText(void) const
 {
 	return this->_text;

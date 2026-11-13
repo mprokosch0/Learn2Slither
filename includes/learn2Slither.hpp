@@ -17,6 +17,7 @@ extern "C"
 # include <unordered_map>
 # include <functional>
 # include <filesystem>
+# include <format>
 
 class Image;
 class Engine;
@@ -55,12 +56,13 @@ class Text
 		enum class VAlign {Top, Center, Bottom};
 		enum class Colors {Primary, Secondary};
 		const std::string	&getText(void) const;
-		void	render(int x, int y, Image &img,
-			HAlign hAlign = HAlign::Left, VAlign vAlign = VAlign::Center,
-			Colors color = Colors::Primary) const;
-		void	renderClip(int x, int y, Image &img, box &clip,
-			HAlign hAlign = HAlign::Left, VAlign vAlign = VAlign::Center,
-			Colors color = Colors::Primary) const;
+		void				setText(std::string text);
+		void				render(int x, int y, Image &img,
+								HAlign hAlign = HAlign::Left, VAlign vAlign = VAlign::Center,
+								Colors color = Colors::Primary) const;
+		void				renderClip(int x, int y, Image &img, box &clip,
+								HAlign hAlign = HAlign::Left, VAlign vAlign = VAlign::Center,
+								Colors color = Colors::Primary) const;
 };
 
 class Rectangle
@@ -135,20 +137,24 @@ class Image
 class Button
 {
 	private:
-		static int						_borderWidth;
-		Text							_text;
-		box								_dimentions;
-		int								_color;
-		int								_hoverColor;
-		int								_borderColor;
-		int								_borderHoverColor;
-		bool							_hover;
-		bool							_active;
+		static int				_borderWidth;
+		Text					_text;
+		box						_dimentions;
+		int						_color;
+		int						_hoverColor;
+		int						_borderColor;
+		int						_borderHoverColor;
+		int						_pressedColor;
+		int						_pressedBorderColor;
+		bool					_hover;
+		bool					_active;
+		bool					_pressed;
 		std::function<void()>	_onClickFunction;
 	
 	public:
+		Button(void);
 		Button(box dim, int color, int hoverColor, int borderColor,
-			int borderHovercolor, Text text, bool active,
+			int borderHovercolor, int pressedColor, int pressedBorderColor, Text text, bool active,
 			std::function<void()> func);
 		Button(Button const &rhs);
 		~Button();
@@ -157,7 +163,9 @@ class Button
 		Button	&operator=(Button const &rhs);
 	
 	public:
-		void		click(void) const;
+		void		click(void);
+		bool		isPressed(void) const;
+		void		setPressed(bool press);
 		void		render(Image &img) const;
 		void		renderClip(Image &img, box &clip) const;
 		void		clearHover(void);
@@ -172,6 +180,34 @@ class Button
 		void		desactivate(void);
 
 };
+
+template<typename T>
+class Slider
+{
+	private:
+		box		_dims;
+		Button	_slider;
+		T		_vMin;
+		T		_vMax;
+	
+	
+	public:
+		Slider(void);
+		Slider(box dim, int color, int hoverColor, int borderColor,
+			int borderHovercolor, T valueMin, T valueMax);
+		Slider(const Slider &rhs) = default;
+		~Slider();
+	
+	public:
+		void	click(int x, T &value);
+		bool	isMouseOn(void) const;
+		void	clearHover(void);
+		void	updatePos(T const &value);
+		bool	hoverIfOnSlider(int x, int y);
+		void	render(Image &img) const;
+};
+
+# include "Slider.tpp"
 
 struct Hooks
 {
@@ -226,20 +262,53 @@ class TitleScreen : public IScreen
 class SelectScreen : public IScreen
 {
 	private:
-		std::vector<Button>									_files;
-		std::pair<Text, std::array<int, 2>>					_title;
-		std::vector<std::pair<Text, std::array<int, 2>>>	_texts;
-		std::vector<Rectangle>								_rectangles;
-		Rectangle											_fileListRect;
-		std::shared_ptr<Agent>								_selectedFile;
-		uintmax_t											_selectedFileSize;
+		using textCo = std::vector<std::pair<Text, std::array<int, 2>>>;
+		struct selectedFile
+		{
+			std::shared_ptr<Agent>	file;
+			textCo					titles;
+			textCo					names;
+			textCo					values;
+			std::vector<Rectangle>	rectangles;
+			Button					useModel;
+		};
+		struct settings
+		{
+			std::string				exportName;
+			bool					exportModel;
+			size_t					width;
+			Slider<size_t>			wSlider;
+			size_t					height;
+			Slider<size_t>			hSlider;
+			textCo					titles;
+			textCo					names;
+			textCo					values;
+			std::vector<Rectangle>	rectangles;
+			std::array<Button, 3>	boardSize;
+			std::vector<Button>		buttons;
+		};
 
 	private:
+		std::vector<Button>					_files;
+		std::pair<Text, std::array<int, 2>>	_title;
+		textCo								_texts;
+		std::vector<Rectangle>				_rectangles;
+		Rectangle							_fileListRect;
+		selectedFile						_selectedFile;
+		settings							_settings;
+
+	private:
+		void	initModelSelection(void);
+		void	initSettings(void);
 		void	addEntry(void);
 		void	removeEntry(void);
 		void	updateFilesVector(void);
+		void	hoverUpdate(int x, int y);
 		void	scrollButtonsFiles(int button);
 		void	renderScrollList(Image &img) const;
+		void	renderSettings(Image &img) const;
+		void	renderPreview(Image &img) const;
+		void	renderSelectedFile(Image &img) const;
 
 
 	public:

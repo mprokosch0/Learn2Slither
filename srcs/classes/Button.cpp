@@ -2,19 +2,29 @@
 
 int Button::_borderWidth = 2;
 
+Button::Button(void):
+	_text(), _dimentions(), _color(), _hoverColor(),
+	_borderColor(), _borderHoverColor(),
+	_pressedColor(), _pressedBorderColor(),
+	_hover(), _active(), _pressed(), _onClickFunction()
+{}
+
 Button::Button(box dim, int color, int hoverColor, int borderColor,
-	int borderHoverColor, Text text, bool active,
-	std::function<void()> func):
+	int borderHoverColor, int pressedColor, int pressedBorderColor,
+	Text text, bool active, std::function<void()> func):
 	_text(text), _dimentions(dim), _color(color), _hoverColor(hoverColor),
 	_borderColor(borderColor), _borderHoverColor(borderHoverColor),
-	_hover(false), _active(active), _onClickFunction(func)
+	_pressedColor(pressedColor), _pressedBorderColor(pressedBorderColor),
+	_hover(false), _active(active), _pressed(false), _onClickFunction(func)
 {}
 
 Button::Button(Button const &rhs): _text(rhs._text),
 	 _dimentions(rhs._dimentions), _color(rhs._color),
 	 _hoverColor(rhs._hoverColor), _borderColor(rhs._borderColor),
-	 _borderHoverColor(rhs._borderHoverColor), _hover(rhs._hover),
-	 _active(rhs._active), _onClickFunction(rhs._onClickFunction)
+	 _borderHoverColor(rhs._borderHoverColor), _pressedColor(rhs._pressedColor),
+	 _pressedBorderColor(rhs._pressedBorderColor), _hover(rhs._hover),
+	 _active(rhs._active), _pressed(rhs._pressed),
+	 _onClickFunction(rhs._onClickFunction)
 {}
 
 Button::~Button()
@@ -30,8 +40,11 @@ Button	&Button::operator=(Button const &rhs)
 	this->_hoverColor = rhs._hoverColor;
 	this->_borderColor = rhs._borderColor;
 	this->_borderHoverColor = rhs._borderHoverColor;
+	this->_pressedColor = rhs._pressedColor;
+	this->_pressedBorderColor = rhs._pressedBorderColor;
 	this->_hover = rhs._hover;
 	this->_active = rhs._active;
+	this->_pressed = rhs._pressed;
 	this->_onClickFunction = rhs._onClickFunction;
 	return *this;
 }
@@ -39,6 +52,16 @@ Button	&Button::operator=(Button const &rhs)
 void	Button::clearHover(void)
 {
 	this->_hover = false;
+}
+
+bool	Button::isPressed(void) const
+{
+	return this->_pressed;
+}
+
+void	Button::setPressed(bool press)
+{
+	this->_pressed = press;
 }
 
 bool	Button::isMouseOn(void) const
@@ -102,10 +125,13 @@ void	Button::desactivate(void)
 	this->_active = false;
 }
 
-void	Button::click(void) const
+void	Button::click(void)
 {
 	if (this->_active)
+	{
 		this->_onClickFunction();
+		this->_pressed = true;
+	}
 }
 
 void	Button::render(Image &img) const
@@ -113,7 +139,9 @@ void	Button::render(Image &img) const
 	if (!this->_active)
 		return ;
 	int borderColor = (this->_hover) ? this->_borderHoverColor : this->_borderColor;
+	borderColor = (this->_pressed) ? this->_pressedBorderColor : borderColor;
 	int color = (this->_hover) ? this->_hoverColor : this->_color;
+	color = (this->_pressed) ? this->_pressedColor : color;
 	img.putRectangle(this->_dimentions, color);
 	box border = this->_dimentions;
 	border.h = this->_borderWidth;
@@ -126,7 +154,7 @@ void	Button::render(Image &img) const
 	img.putRectangle(border, borderColor);
 	border.x += (this->_dimentions.w - this->_borderWidth);
 	img.putRectangle(border, borderColor);
-	Text::Colors col = (this->_hover) ? Text::Colors::Secondary : Text::Colors::Primary;
+	Text::Colors col = (this->_hover || this->_pressed) ? Text::Colors::Secondary : Text::Colors::Primary;
 	this->_text.render(this->_dimentions.x + (this->_dimentions.w / 2),
 						this->_dimentions.y + (this->_dimentions.h / 2),
 					img, Text::HAlign::Center, Text::VAlign::Center, col);
@@ -137,7 +165,9 @@ void	Button::renderClip(Image &img, box &clip) const
 	if (!this->_active)
 		return ;
 	int borderColor = (this->_hover) ? this->_borderHoverColor : this->_borderColor;
+	borderColor = (this->_pressed) ? this->_pressedBorderColor : borderColor;
 	int color = (this->_hover) ? this->_hoverColor : this->_color;
+	color = (this->_pressed) ? this->_pressedColor : color;
 	img.putRectangle(clip, color);
 	if (this->_dimentions.y >= clip.y)
 	{
@@ -153,7 +183,7 @@ void	Button::renderClip(Image &img, box &clip) const
 	img.putRectangle(border, borderColor);
 	border.x += clip.w - this->_borderWidth;
 	img.putRectangle(border, borderColor);
-	Text::Colors col = (this->_hover) ? Text::Colors::Secondary : Text::Colors::Primary;
+	Text::Colors col = (this->_hover || this->_pressed) ? Text::Colors::Secondary : Text::Colors::Primary;
 	this->_text.renderClip(this->_dimentions.x + (this->_dimentions.w / 2),
 						this->_dimentions.y + (this->_dimentions.h / 2),
 					img, clip, Text::HAlign::Center, Text::VAlign::Center, col);

@@ -9,14 +9,14 @@ int main(void)
 		int		nbGames = 0;
 		long sizeDied = 0, sizeStarved = 0;
 		int  nbDied = 0, nbStarved = 0, nbReach10 = 0;
-		ai.importModel("test3.mdl");
+		ai.importModel("29avg.mdl");
 		ai.setState(Interpreter(board.getSnakeViews(),
 				0, Actions::FORWARD, 0, 0).getState());
 		ai.setTraining(false);
 		int	nbMoves = 0, snakeSize = 0;
 		int max = 0, maxMove = 0;
 		int min = 0;
-		while (nbGames < 200000)
+		while (nbGames < 10000)
 		{
 			size_t moves = 0;
 			while (moves < 2500)
@@ -75,7 +75,7 @@ int main(void)
 				std::cout << "Epsilon = " << ai.getExplRate() << std::endl;
 			}
 		}
-		ai.exportModel("test3.mdl");
+		ai.exportModel("100.mdl");
 	}
 	catch(const std::exception& e)
 	{
