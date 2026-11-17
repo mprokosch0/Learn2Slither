@@ -97,6 +97,34 @@ int		Engine::mouseMoveTrampoline(int x, int y, void *self)
 	return 0;
 }
 
+int		Engine::onKeyDownTrampoline(int keycode, void *self)
+{
+	try
+	{
+		static_cast<Engine *>(self)->onKeyDown(keycode);
+	}
+	catch(const std::exception& e)
+	{
+		static_cast<Engine *>(self)->_error = std::current_exception();
+		mlx_loop_end(static_cast<Engine *>(self)->_mlx);
+	}
+	return 0;
+}
+
+int		Engine::onKeyUpTrampoline(int keycode, void *self)
+{
+	try
+	{
+		static_cast<Engine *>(self)->onKeyUp(keycode);
+	}
+	catch(const std::exception& e)
+	{
+		static_cast<Engine *>(self)->_error = std::current_exception();
+		mlx_loop_end(static_cast<Engine *>(self)->_mlx);
+	}
+	return 0;
+}
+
 void	Engine::mouseDown(int button, int x, int y)
 {
 	this->_screen->onMouseDown(button, x, y);
@@ -110,6 +138,16 @@ void	Engine::mouseUp(int button, int x, int y)
 void	Engine::mouseMove(int x, int y)
 {
 	this->_screen->onMouseMove(x, y);
+}
+
+void	Engine::onKeyDown(int keycode)
+{
+	this->_screen->onKeyDown(keycode);
+}
+
+void	Engine::onKeyUp(int keycode)
+{
+	this->_screen->onKeyUp(keycode);
 }
 
 void	Engine::loop()
@@ -139,6 +177,8 @@ void	Engine::run(void)
 {
 	try
 	{
+		mlx_hook(this->_mlx_win, ON_KEYDOWN, (1L << 0), asMlxHook(&Engine::onKeyDownTrampoline), this);
+		mlx_hook(this->_mlx_win, ON_KEYUP, (1L << 1), asMlxHook(&Engine::onKeyUpTrampoline), this);
 		mlx_hook(this->_mlx_win, ON_MOUSEDOWN, (1L << 2), asMlxHook(&Engine::mouseDownTrampoline), this);
 		mlx_hook(this->_mlx_win, ON_MOUSEUP, (1L << 3), asMlxHook(&Engine::mouseUpTrampoline), this);
 		mlx_hook(this->_mlx_win, ON_MOUSEMOVE, (1L << 6), asMlxHook(&Engine::mouseMoveTrampoline), this);

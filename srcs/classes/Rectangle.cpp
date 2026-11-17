@@ -44,3 +44,9 @@ void	Rectangle::render(Image &img) const
 	img.putRectangleBorder(this->_dimentions, this->_color,
 		this->_borderWidth, this->_borderColor);
 }
+
+void	Rectangle::render(Image &img, int color, int borderColor) const
+{
+	img.putRectangleBorder(this->_dimentions, color,
+		this->_borderWidth, borderColor);
+}

@@ -17,6 +17,7 @@ extern "C"
 # include <unordered_map>
 # include <functional>
 # include <filesystem>
+# include <chrono>
 # include <format>
 
 class Image;
@@ -57,10 +58,15 @@ class Text
 		enum class Colors {Primary, Secondary};
 		const std::string	&getText(void) const;
 		void				setText(std::string text);
+		float				getZoom(void) const;
+		void				addChar(char c, size_t pos);
+		void				deleteChar(size_t pos);
+		size_t				pxSize(void) const;
+		size_t				size(void) const;
 		void				render(int x, int y, Image &img,
 								HAlign hAlign = HAlign::Left, VAlign vAlign = VAlign::Center,
 								Colors color = Colors::Primary) const;
-		void				renderClip(int x, int y, Image &img, box &clip,
+		void				renderClip(int x, int y, Image &img, box const &clip,
 								HAlign hAlign = HAlign::Left, VAlign vAlign = VAlign::Center,
 								Colors color = Colors::Primary) const;
 };
@@ -84,6 +90,7 @@ class Rectangle
 	
 	public:
 		void		render(Image &img) const;
+		void		render(Image &img, int color, int borderColor) const;
 		const box	getDimentions(void) const;
 		int			getBorderWidth(void) const;
 };
@@ -113,14 +120,15 @@ class Image
 		Image	&operator=(Image const &rhs);
 	
 	public:
-		void	*getImg(void) const;
-		char	*getAddr(void) const;
-		int		getBitsPerPixel(void) const;
-		int		getLineLength(void) const;
-		int		getEndian(void) const;
+		void		*getImg(void) const;
+		char		*getAddr(void) const;
+		int			getBitsPerPixel(void) const;
+		int			getLineLength(void) const;
+		int			getEndian(void) const;
+		static int	getStringSize(std::string str, float zoom);
+		static bool	isCharInFont(char c);
 	
 	public:
-		static int	getStringSize(std::string str, float zoom);
 		void		init(void *mlx, size_t width, size_t height);
 		void		destroy(void);
 		void		colorImage(int color);
@@ -130,44 +138,44 @@ class Image
 		void		putHLine(int y, int xStart, int xEnd, int color, size_t width);
 		void		putVLine(int x, int yStart, int yEnd, int color, size_t width);
 		void		putString(int x, int y, std::string text, int color, float zoom);
-		void		putStringClip(int x, int y, std::string text, box &clip, int color, float zoom);
+		void		putStringClip(int x, int y, std::string text, box const &clip, int color, float zoom);
 
 };
 
 class Button
 {
 	private:
-		static int				_borderWidth;
-		Text					_text;
-		box						_dimentions;
-		int						_color;
-		int						_hoverColor;
-		int						_borderColor;
-		int						_borderHoverColor;
-		int						_pressedColor;
-		int						_pressedBorderColor;
-		bool					_hover;
-		bool					_active;
-		bool					_pressed;
-		std::function<void()>	_onClickFunction;
+		static int									_borderWidth;
+		Text										_text;
+		int											_textX;
+		bool										_ascend;
+		std::chrono::_V2::steady_clock::time_point	_tPoint;
+		int											_renderCount;
+		box											_dimentions;
+		int											_color;
+		int											_hoverColor;
+		int											_borderColor;
+		int											_borderHoverColor;
+		int											_pressedColor;
+		int											_pressedBorderColor;
+		bool										_hover;
+		bool										_active;
+		bool										_pressed;
+		std::function<void()>						_onClickFunction;
 	
 	public:
 		Button(void);
 		Button(box dim, int color, int hoverColor, int borderColor,
 			int borderHovercolor, int pressedColor, int pressedBorderColor, Text text, bool active,
 			std::function<void()> func);
-		Button(Button const &rhs);
 		~Button();
-	
-	public:
-		Button	&operator=(Button const &rhs);
 	
 	public:
 		void		click(void);
 		bool		isPressed(void) const;
 		void		setPressed(bool press);
-		void		render(Image &img) const;
-		void		renderClip(Image &img, box &clip) const;
+		void		render(Image &img);
+		void		renderClip(Image &img, box &clip);
 		void		clearHover(void);
 		bool		hoverIfOnButton(int x, int y);
 		bool		hoverIfOnButtonClip(int x, int y, box &clip);
@@ -175,10 +183,41 @@ class Button
 		void		setDimentions(box &dim);
 		const box	&getDimentions(void) const;
 		const Text	&getText(void) const;
+		void		setText(std::string txt);
 		bool		isActive(void) const;
 		void		activate(void);
 		void		desactivate(void);
 
+};
+
+class TextBox
+{
+	private:
+		Rectangle									_box;
+		Text										_input;
+		size_t										_cursorPos;
+		int											_inputX;
+		bool										_focused;
+		bool										_active;
+		int											_inactiveColor;
+		int											_inactiveColorBorder;
+		std::chrono::_V2::steady_clock::time_point	_tPoint;
+	
+	
+	public:
+		TextBox(void);
+		TextBox(Text txt, Rectangle box, int inactiveColor, int inactiveColorBorder);
+		~TextBox();
+	
+	public:
+		bool	isFocused(void) const;
+		bool	isMouseOn(int x, int y) const;
+		void	activate(void);
+		void	desactivate(void);
+		void	setText(std::string txt);
+		void	doAction(int keycode);
+		void	setfocus(bool focus);
+		void	render(Image &img);
 };
 
 template<typename T>
@@ -187,14 +226,19 @@ class Slider
 	private:
 		box		_dims;
 		Button	_slider;
+		int		_trackColor;
+		int		_trackColorDesac;
 		T		_vMin;
 		T		_vMax;
+		bool	_active;
 	
 	
 	public:
 		Slider(void);
-		Slider(box dim, int color, int hoverColor, int borderColor,
-			int borderHovercolor, T valueMin, T valueMax);
+		Slider(box dim, int trackColor, int trackColorDesac, int color,
+			int hoverColor, int borderColor,
+			int borderHovercolor, int pressedColor, int pressedBorderColor,
+			T valueMin, T valueMax, bool active = true);
 		Slider(const Slider &rhs) = default;
 		~Slider();
 	
@@ -204,7 +248,9 @@ class Slider
 		void	clearHover(void);
 		void	updatePos(T const &value);
 		bool	hoverIfOnSlider(int x, int y);
-		void	render(Image &img) const;
+		void	activate(void);
+		void	desactivate(void);
+		void	render(Image &img);
 };
 
 # include "Slider.tpp"
@@ -216,6 +262,30 @@ struct Hooks
 	bool	mouseScrollUp = false;
 	bool	mouseScrollDown = false;
 	bool	mouseScrollButton = false;
+	bool	lShiftKey = false;
+};
+
+enum class keycodes
+{
+	DEL = 65288,
+	HOME = 65360,
+	L_SHIFT = 65505,
+	R_SHIFT = 65506,
+	ARR_LEFT = 65361,
+	ARR_UP = 65362,
+	ARR_RIGHT = 65363,
+	ARR_DOWN = 65364,
+	END = 65367,
+	ZERO = 65438,
+	ONE = 65436,
+	TWO = 65433,
+	THREE = 65435,
+	FOUR = 65430,
+	FIVE = 65437,
+	SIX = 65432,
+	SEVEN = 65429,
+	EIGHT = 65431,
+	NINE = 65434
 };
 
 class IScreen
@@ -227,7 +297,8 @@ class IScreen
 		Hooks				_hooks;
 		enum {HOOK_DOWN, HOOK_UP};
 	protected:
-		virtual void	updateHooks(int button, bool DownUp);
+		virtual void	updateMouseHooks(int button, bool DownUp);
+		virtual void	updateKeyHooks(keycodes keycode, bool DownUp);
 
 
 	public:
@@ -238,7 +309,8 @@ class IScreen
 		virtual void onExit() {};
 		virtual void update() = 0;
 		virtual void render(Image &img) = 0;
-		virtual void onKey(int keycode) = 0;
+		virtual void onKeyDown(int keycode) = 0;
+		virtual void onKeyUp(int keycode) = 0;
 		virtual void onMouseDown(int button, int x, int y) = 0;
 		virtual void onMouseUp(int button, int x, int y) = 0;
 		virtual void onMouseMove(int x, int y) = 0;
@@ -253,7 +325,8 @@ class TitleScreen : public IScreen
 	public:
 		void	update() override;
 		void	render(Image &img) override;
-		void	onKey(int keycode) override;
+		void	onKeyDown(int keycode) override;
+		void	onKeyUp(int keycode) override;
 		void	onMouseDown(int button, int x, int y) override;
 		void	onMouseUp(int button, int x, int y) override;
 		void	onMouseMove(int x, int y) override;
@@ -274,18 +347,27 @@ class SelectScreen : public IScreen
 		};
 		struct settings
 		{
-			std::string				exportName;
-			bool					exportModel;
-			size_t					width;
-			Slider<size_t>			wSlider;
-			size_t					height;
-			Slider<size_t>			hSlider;
-			textCo					titles;
-			textCo					names;
-			textCo					values;
-			std::vector<Rectangle>	rectangles;
-			std::array<Button, 3>	boardSize;
-			std::vector<Button>		buttons;
+			std::shared_ptr<Agent>			model;
+			bool							useModel;
+			bool							exportModel;
+			TextBox							exportInput;
+			size_t							width;
+			Slider<size_t>					wSlider;
+			size_t							height;
+			Slider<size_t>					hSlider;
+			textCo							titles;
+			textCo							names;
+			textCo							values;
+			std::vector<Rectangle>			rectangles;
+			std::array<Button, 3>			boardSize;
+			std::array<Button, 2>			onOffImport;
+			std::array<Button, 2>			onOffExport;
+			std::array<Button, 2>			onOffLearning;
+			bool							learning;
+			std::array<float, 3>			hPVs;
+			textCo							hyperParametersValues;
+			std::array<Slider<float>, 3>	hyperParametersSlider;
+			std::vector<Button>				buttons;
 		};
 
 	private:
@@ -305,10 +387,10 @@ class SelectScreen : public IScreen
 		void	updateFilesVector(void);
 		void	hoverUpdate(int x, int y);
 		void	scrollButtonsFiles(int button);
-		void	renderScrollList(Image &img) const;
-		void	renderSettings(Image &img) const;
+		void	renderScrollList(Image &img);
+		void	renderSettings(Image &img);
 		void	renderPreview(Image &img) const;
-		void	renderSelectedFile(Image &img) const;
+		void	renderSelectedFile(Image &img);
 
 
 	public:
@@ -317,7 +399,8 @@ class SelectScreen : public IScreen
 	public:
 		void	update() override;
 		void	render(Image &img) override;
-		void	onKey(int keycode) override;
+		void	onKeyDown(int keycode) override;
+		void	onKeyUp(int keycode) override;
 		void	onMouseDown(int button, int x, int y) override;
 		void	onMouseUp(int button, int x, int y) override;
 		void	onMouseMove(int x, int y) override;
@@ -360,9 +443,13 @@ class Engine
 		static int	mouseDownTrampoline(int button, int x, int y, void *self);
 		static int	mouseUpTrampoline(int button, int x, int y, void *self);
 		static int	mouseMoveTrampoline(int x, int y, void *self);
+		static int	onKeyDownTrampoline(int keycode, void *self);
+		static int	onKeyUpTrampoline(int keycode, void *self);
 		void		mouseDown(int button, int x, int y);
 		void		mouseUp(int button, int x, int y);
 		void		mouseMove(int x, int y);
+		void		onKeyDown(int keycode);
+		void		onKeyUp(int keycode);
 		void		loop();
 
 

@@ -1,6 +1,6 @@
 #include "learn2Slither.hpp"
 
-void	IScreen::updateHooks(int button, bool downUp)
+void	IScreen::updateMouseHooks(int button, bool downUp)
 {
 	bool update = (downUp) ? false : true;
 	switch (button)
@@ -23,6 +23,20 @@ void	IScreen::updateHooks(int button, bool downUp)
 		
 		case M_SCROLL_DOWN:
 			this->_hooks.mouseScrollDown = update;
+			break;
+		
+		default:
+			break;
+	}
+}
+
+void	IScreen::updateKeyHooks(keycodes keycode, bool downUp)
+{
+	bool update = (downUp) ? false : true;
+	switch (keycode)
+	{
+		case keycodes::L_SHIFT:
+			this->_hooks.lShiftKey = update;
 			break;
 		
 		default:

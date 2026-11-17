@@ -13,11 +13,14 @@ SRCS =	srcs/main.cpp \
 		srcs/classes/Engine.cpp \
 		srcs/classes/Image.cpp \
 		srcs/classes/Text.cpp \
+		srcs/classes/TextBox.cpp \
 		srcs/classes/Rectangle.cpp \
 		srcs/classes/Button.cpp \
 		srcs/classes/screens/IScreen.cpp \
 		srcs/classes/screens/TitleScreen.cpp \
-		srcs/classes/screens/SelectScreen.cpp \
+		srcs/classes/screens/SelectScreen/SelectScreen.cpp \
+		srcs/classes/screens/SelectScreen/slctScreenRender.cpp \
+		srcs/classes/screens/SelectScreen/slctScreenInit.cpp \
 		srcs/classes/game/Snake.cpp \
 		srcs/classes/game/Board.cpp \
 		srcs/classes/agent/Agent.cpp \

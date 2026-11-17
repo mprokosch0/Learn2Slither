@@ -43,6 +43,32 @@ const std::string	&Text::getText(void) const
 	return this->_text;
 }
 
+void	Text::addChar(char c, size_t pos)
+{
+	this->_text.insert(this->_text.begin() + pos, 1, c);
+}
+
+void	Text::deleteChar(size_t pos)
+{
+	this->_text.erase(this->_text.begin() + pos);
+}
+
+size_t	Text::pxSize(void) const
+{
+	return this->_width;
+}
+
+float	Text::getZoom(void) const
+{
+	return this->_zoom;
+}
+
+size_t	Text::size(void) const
+{
+	return this->_text.size();
+}
+
+
 void	Text::render(int x, int y, Image &img, HAlign hAlign,
 	VAlign vAlign, Colors color) const
 {
@@ -82,7 +108,7 @@ void	Text::render(int x, int y, Image &img, HAlign hAlign,
 	img.putString(newX, newY, this->_text, col, this->_zoom);
 }
 
-void	Text::renderClip(int x, int y, Image &img, box &clip, HAlign hAlign,
+void	Text::renderClip(int x, int y, Image &img, box const &clip, HAlign hAlign,
 	VAlign vAlign, Colors color) const
 {
 	size_t newX = 0, newY = 0;

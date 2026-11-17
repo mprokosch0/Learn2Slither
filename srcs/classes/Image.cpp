@@ -61,6 +61,11 @@ typedef struct s_img
 	int		endian = 0;
 }	t_img;
 
+bool	Image::isCharInFont(char c)
+{
+	return (Image::_font.find(c) != Image::_font.end());
+}
+
 static int	getPixel(t_img &img, int x, int y)
 {
 	char *dst;
@@ -224,15 +229,20 @@ void	Image::putVLine(int x, int yStart, int yEnd, int color, size_t width)
 
 int		Image::getStringSize(std::string str, float zoom)
 {
-	float size = 0;
+	int size = 0;
 	for (char c : str)
 	{
 		if (Image::_font.find(c) == Image::_font.end() && c != ' ')
 			throw std::runtime_error("Unrecognise char in text. Please refers you to the font");
 		if (c == ' ')
+		{
 			size += 8 * zoom;
+			continue ;
+		}
 		else
 			size += Image::_font[c].size() * zoom;
+		if (zoom != 1.f)
+			size++;
 	}
 	return static_cast<int>(size);
 }
@@ -265,7 +275,7 @@ void	Image::putString(int x, int y, std::string text, int color, float zoom)
 	}
 }
 
-void	Image::putStringClip(int x, int y, std::string text, box &clip, int color, float zoom)
+void	Image::putStringClip(int x, int y, std::string text, box const &clip, int color, float zoom)
 {
 	(void)clip;
 	for (char c: text)

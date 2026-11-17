@@ -21,9 +21,14 @@ TitleScreen::TitleScreen(size_t width, size_t height, Engine &engine): IScreen(w
 void	TitleScreen::update(void)
 {}
 
-void	TitleScreen::onKey(int keycode)
+void	TitleScreen::onKeyDown(int keycode)
 {
-	(void)keycode;
+	updateKeyHooks(static_cast<keycodes>(keycode), HOOK_DOWN);
+}
+
+void	TitleScreen::onKeyUp(int keycode)
+{
+	updateKeyHooks(static_cast<keycodes>(keycode), HOOK_UP);
 }
 
 void	TitleScreen::onMouseDown(int button, int x, int y)
@@ -40,13 +45,13 @@ void	TitleScreen::onMouseDown(int button, int x, int y)
 			}
 		}
 	}
-	updateHooks(button, HOOK_DOWN);
+	updateMouseHooks(button, HOOK_DOWN);
 }
 
 void	TitleScreen::onMouseUp(int button, int x, int y)
 {
 	(void)x, (void)y;
-	updateHooks(button, HOOK_UP);
+	updateMouseHooks(button, HOOK_UP);
 }
 
 void	TitleScreen::onMouseMove(int x, int y)

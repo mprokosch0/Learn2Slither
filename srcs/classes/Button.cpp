@@ -3,8 +3,10 @@
 int Button::_borderWidth = 2;
 
 Button::Button(void):
-	_text(), _dimentions(), _color(), _hoverColor(),
-	_borderColor(), _borderHoverColor(),
+	_text(), _textX(), _ascend(true),
+	_tPoint(std::chrono::steady_clock::time_point{}),
+	_renderCount(), _dimentions(),
+	_color(), _hoverColor(), _borderColor(), _borderHoverColor(),
 	_pressedColor(), _pressedBorderColor(),
 	_hover(), _active(), _pressed(), _onClickFunction()
 {}
@@ -12,42 +14,16 @@ Button::Button(void):
 Button::Button(box dim, int color, int hoverColor, int borderColor,
 	int borderHoverColor, int pressedColor, int pressedBorderColor,
 	Text text, bool active, std::function<void()> func):
-	_text(text), _dimentions(dim), _color(color), _hoverColor(hoverColor),
+	_text(text), _textX(dim.x + this->_borderWidth), _ascend(true),
+	_tPoint(std::chrono::steady_clock::time_point{}), _renderCount(0),
+	_dimentions(dim), _color(color), _hoverColor(hoverColor),
 	_borderColor(borderColor), _borderHoverColor(borderHoverColor),
 	_pressedColor(pressedColor), _pressedBorderColor(pressedBorderColor),
 	_hover(false), _active(active), _pressed(false), _onClickFunction(func)
 {}
 
-Button::Button(Button const &rhs): _text(rhs._text),
-	 _dimentions(rhs._dimentions), _color(rhs._color),
-	 _hoverColor(rhs._hoverColor), _borderColor(rhs._borderColor),
-	 _borderHoverColor(rhs._borderHoverColor), _pressedColor(rhs._pressedColor),
-	 _pressedBorderColor(rhs._pressedBorderColor), _hover(rhs._hover),
-	 _active(rhs._active), _pressed(rhs._pressed),
-	 _onClickFunction(rhs._onClickFunction)
-{}
-
 Button::~Button()
 {}
-
-Button	&Button::operator=(Button const &rhs)
-{
-	if (this == &rhs)
-		return *this;
-	this->_text = rhs._text;
-	this->_dimentions = rhs._dimentions;
-	this->_color = rhs._color;
-	this->_hoverColor = rhs._hoverColor;
-	this->_borderColor = rhs._borderColor;
-	this->_borderHoverColor = rhs._borderHoverColor;
-	this->_pressedColor = rhs._pressedColor;
-	this->_pressedBorderColor = rhs._pressedBorderColor;
-	this->_hover = rhs._hover;
-	this->_active = rhs._active;
-	this->_pressed = rhs._pressed;
-	this->_onClickFunction = rhs._onClickFunction;
-	return *this;
-}
 
 void	Button::clearHover(void)
 {
@@ -105,6 +81,11 @@ const box	&Button::getDimentions(void) const
 	return this->_dimentions;
 }
 
+void	Button::setText(std::string txt)
+{
+	this->_text.setText(txt);
+}
+
 const Text	&Button::getText(void) const
 {
 	return this->_text;
@@ -134,7 +115,9 @@ void	Button::click(void)
 	}
 }
 
-void	Button::render(Image &img) const
+# include <unistd.h>
+
+void	Button::render(Image &img)
 {
 	if (!this->_active)
 		return ;
@@ -155,12 +138,54 @@ void	Button::render(Image &img) const
 	border.x += (this->_dimentions.w - this->_borderWidth);
 	img.putRectangle(border, borderColor);
 	Text::Colors col = (this->_hover || this->_pressed) ? Text::Colors::Secondary : Text::Colors::Primary;
+	if ((int)this->_text.pxSize() > this->_dimentions.w)
+	{
+		box clip = this->_dimentions;
+		clip.x += this->_borderWidth;
+		clip.y += this->_borderWidth;
+		clip.w -= this->_borderWidth * 2;
+		clip.h -= this->_borderWidth * 2;
+
+		const int textW = (int)this->_text.pxSize();
+		const int maxX  = clip.x;
+		const int minX  = clip.x + clip.w - textW;
+
+		this->_text.renderClip(this->_textX, clip.y + (clip.h / 2),
+						img, clip, Text::HAlign::Left, Text::VAlign::Center, col);
+
+		const bool pause = (this->_tPoint != std::chrono::steady_clock::time_point{});
+
+		if (pause)
+		{
+			std::chrono::duration<double> elapsed =
+				std::chrono::steady_clock::now() - this->_tPoint;
+			if (elapsed.count() >= 2.0)
+			{
+				this->_tPoint = std::chrono::steady_clock::time_point{};
+				this->_ascend = !this->_ascend;
+				this->_renderCount = 0;
+			}
+		}
+		else
+		{
+			if (!(this->_renderCount % 10))
+				this->_textX += this->_ascend ? -1 : 1;
+			this->_renderCount++;
+
+			if (this->_textX <= minX || this->_textX >= maxX)
+			{
+				this->_textX = std::clamp(this->_textX, minX, maxX);
+				this->_tPoint = std::chrono::steady_clock::now();
+			}
+		}
+		return ;
+	}
 	this->_text.render(this->_dimentions.x + (this->_dimentions.w / 2),
-						this->_dimentions.y + (this->_dimentions.h / 2),
-					img, Text::HAlign::Center, Text::VAlign::Center, col);
+							this->_dimentions.y + (this->_dimentions.h / 2),
+						img, Text::HAlign::Center, Text::VAlign::Center, col);
 }
 
-void	Button::renderClip(Image &img, box &clip) const
+void	Button::renderClip(Image &img, box &clip)
 {
 	if (!this->_active)
 		return ;
@@ -184,6 +209,48 @@ void	Button::renderClip(Image &img, box &clip) const
 	border.x += clip.w - this->_borderWidth;
 	img.putRectangle(border, borderColor);
 	Text::Colors col = (this->_hover || this->_pressed) ? Text::Colors::Secondary : Text::Colors::Primary;
+	if ((int)this->_text.pxSize() > this->_dimentions.w)
+	{
+		box cliped = clip;
+		cliped.x += this->_borderWidth;
+		cliped.y += this->_borderWidth;
+		cliped.w -= this->_borderWidth * 2;
+		cliped.h -= this->_borderWidth * 2;
+
+		const int textW = (int)this->_text.pxSize();
+		const int maxX  = cliped.x;
+		const int minX  = cliped.x + cliped.w - textW;
+
+		this->_text.renderClip(this->_textX, this->_dimentions.y + (this->_dimentions.h / 2),
+						img, cliped, Text::HAlign::Left, Text::VAlign::Center, col);
+
+		const bool pause = (this->_tPoint != std::chrono::steady_clock::time_point{});
+
+		if (pause)
+		{
+			std::chrono::duration<double> elapsed =
+				std::chrono::steady_clock::now() - this->_tPoint;
+			if (elapsed.count() >= 2.0)
+			{
+				this->_tPoint = std::chrono::steady_clock::time_point{};
+				this->_ascend = !this->_ascend;
+				this->_renderCount = 0;
+			}
+		}
+		else
+		{
+			if (!(this->_renderCount % 10))
+				this->_textX += this->_ascend ? -1 : 1;
+			this->_renderCount++;
+
+			if (this->_textX <= minX || this->_textX >= maxX)
+			{
+				this->_textX = std::clamp(this->_textX, minX, maxX);
+				this->_tPoint = std::chrono::steady_clock::now();
+			}
+		}
+		return ;
+	}
 	this->_text.renderClip(this->_dimentions.x + (this->_dimentions.w / 2),
 						this->_dimentions.y + (this->_dimentions.h / 2),
 					img, clip, Text::HAlign::Center, Text::VAlign::Center, col);
