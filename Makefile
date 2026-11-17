@@ -21,6 +21,7 @@ SRCS =	srcs/main.cpp \
 		srcs/classes/screens/SelectScreen/SelectScreen.cpp \
 		srcs/classes/screens/SelectScreen/slctScreenRender.cpp \
 		srcs/classes/screens/SelectScreen/slctScreenInit.cpp \
+		srcs/classes/screens/GameScreen.cpp \
 		srcs/classes/game/Snake.cpp \
 		srcs/classes/game/Board.cpp \
 		srcs/classes/agent/Agent.cpp \

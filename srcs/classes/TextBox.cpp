@@ -48,6 +48,13 @@ void	TextBox::desactivate(void)
 	this->_active = false;
 }
 
+std::string	TextBox::getText(void) const
+{
+	if (this->_active)
+		return this->_input.getText();
+	return "";
+}
+
 void	TextBox::setText(std::string txt)
 {
 	this->_input.setText(txt);
@@ -58,13 +65,14 @@ void	TextBox::doAction(int keycode)
 {
 	if (!this->_active)
 		return ;
-	std::cout << keycode << std::endl;
 	if (keycode < 256 && Image::isCharInFont(keycode))
 		this->_input.addChar(keycode, this->_cursorPos++);
 	else if (keycode == ' ')
 		this->_input.addChar(' ', this->_cursorPos++);
-	else if (this->_cursorPos > 0 && static_cast<keycodes>(keycode) == keycodes::DEL)
+	else if (this->_cursorPos > 0 && static_cast<keycodes>(keycode) == keycodes::BACKSPACE)
 		this->_input.deleteChar(this->_cursorPos-- - 1);
+	else if (this->_cursorPos < this->_input.size() && static_cast<keycodes>(keycode) == keycodes::DEL)
+		this->_input.deleteChar(this->_cursorPos + 1);
 	else if (static_cast<keycodes>(keycode) == keycodes::ARR_LEFT)
 	{
 		if (this->_cursorPos > 0)

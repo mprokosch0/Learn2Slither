@@ -210,14 +210,15 @@ class TextBox
 		~TextBox();
 	
 	public:
-		bool	isFocused(void) const;
-		bool	isMouseOn(int x, int y) const;
-		void	activate(void);
-		void	desactivate(void);
-		void	setText(std::string txt);
-		void	doAction(int keycode);
-		void	setfocus(bool focus);
-		void	render(Image &img);
+		bool		isFocused(void) const;
+		bool		isMouseOn(int x, int y) const;
+		void		activate(void);
+		void		desactivate(void);
+		std::string	getText(void) const;
+		void		setText(std::string txt);
+		void		doAction(int keycode);
+		void		setfocus(bool focus);
+		void		render(Image &img);
 };
 
 template<typename T>
@@ -267,7 +268,8 @@ struct Hooks
 
 enum class keycodes
 {
-	DEL = 65288,
+	BACKSPACE = 65288,
+	DEL = 65535,
 	HOME = 65360,
 	L_SHIFT = 65505,
 	R_SHIFT = 65506,
@@ -318,7 +320,6 @@ class IScreen
 
 class TitleScreen : public IScreen
 {
-
 	public:
 		TitleScreen(size_t width, size_t height, Engine &engine);
 
@@ -364,9 +365,11 @@ class SelectScreen : public IScreen
 			std::array<Button, 2>			onOffExport;
 			std::array<Button, 2>			onOffLearning;
 			bool							learning;
-			std::array<float, 3>			hPVs;
+			std::array<Button, 2>			onOffDisplay;
+			bool							visualDisplay;
+			std::array<double, 3>			hPVs;
 			textCo							hyperParametersValues;
-			std::array<Slider<float>, 3>	hyperParametersSlider;
+			std::array<Slider<double>, 3>	hyperParametersSlider;
 			std::vector<Button>				buttons;
 		};
 
@@ -396,6 +399,29 @@ class SelectScreen : public IScreen
 	public:
 		SelectScreen(size_t width, size_t height, Engine &engine);
 
+	public:
+		void	update() override;
+		void	render(Image &img) override;
+		void	onKeyDown(int keycode) override;
+		void	onKeyUp(int keycode) override;
+		void	onMouseDown(int button, int x, int y) override;
+		void	onMouseUp(int button, int x, int y) override;
+		void	onMouseMove(int x, int y) override;
+};
+
+class GameScreen : public IScreen
+{
+	private:
+		Board		_board;
+		Agent		_agent;
+		bool		_visualDisplay;
+		std::string	_exportName;
+	
+
+	public:
+		GameScreen(size_t width, size_t height, Engine &engine,
+			Board board, Agent agent, bool visualDisplay, std::string exportName);
+	
 	public:
 		void	update() override;
 		void	render(Image &img) override;

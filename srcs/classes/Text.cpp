@@ -50,7 +50,10 @@ void	Text::addChar(char c, size_t pos)
 
 void	Text::deleteChar(size_t pos)
 {
-	this->_text.erase(this->_text.begin() + pos);
+	if (pos >= this->_text.size())
+		this->_text.pop_back();
+	else
+		this->_text.erase(pos, 1);
 }
 
 size_t	Text::pxSize(void) const

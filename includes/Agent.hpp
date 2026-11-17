@@ -10,8 +10,8 @@
 class Interpreter
 {
 	private:
-		std::array<int, 3>	_danger; 		//if danger is on the direction
-		std::array<int, 3>	_snakeBody;		//if snkaeBody is on the direction
+		std::array<int, 3>	_danger; 		//if wall is on the direction
+		std::array<int, 3>	_snakeBody;		//if snakeBody is on the direction
 		std::array<int, 4>	_greenApple;	//if green apple in direction
 		std::array<int, 4>	_redApple;		//if red apple in direction
 		double				_reward;

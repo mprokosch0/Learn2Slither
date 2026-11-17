@@ -90,7 +90,10 @@ void	SelectScreen::renderSettings(Image &img)
 	for (Button &b : sett.onOffLearning)
 		b.render(img);
 	
-	for (Slider<float> &s : sett.hyperParametersSlider)
+	for (Button &b : sett.onOffDisplay)
+		b.render(img);
+	
+	for (Slider<double> &s : sett.hyperParametersSlider)
 		s.render(img);
 	
 	sett.exportInput.render(img);

@@ -169,6 +169,11 @@ void	SelectScreen::hoverUpdate(int x, int y)
 		but.clearHover();
 		but.hoverIfOnButton(x, y);
 	}
+	for (Button &but : this->_settings.onOffDisplay)
+	{
+		but.clearHover();
+		but.hoverIfOnButton(x, y);
+	}
 	for (Button &but : this->_settings.buttons)
 	{
 		but.clearHover();
@@ -179,7 +184,7 @@ void	SelectScreen::hoverUpdate(int x, int y)
 		but.clearHover();
 		but.hoverIfOnButton(x, y);
 	}
-	for (Slider<float> &sli : this->_settings.hyperParametersSlider)
+	for (Slider<double> &sli : this->_settings.hyperParametersSlider)
 	{
 		sli.clearHover();
 		sli.hoverIfOnSlider(x, y);
@@ -299,6 +304,16 @@ void	SelectScreen::onMouseDown(int button, int x, int y)
 			this->_settings.onOffLearning[1].click();
 			this->_settings.onOffLearning[0].setPressed(false);
 		}
+		if (this->_settings.onOffDisplay[0].isMouseOn())
+		{
+			this->_settings.onOffDisplay[0].click();
+			this->_settings.onOffDisplay[1].setPressed(false);
+		}
+		else if (this->_settings.onOffDisplay[1].isMouseOn())
+		{
+			this->_settings.onOffDisplay[1].click();
+			this->_settings.onOffDisplay[0].setPressed(false);
+		}
 		for (Button &but : this->_settings.buttons)
 		{
 			if (but.isMouseOn())
@@ -330,7 +345,7 @@ void	SelectScreen::onMouseDown(int button, int x, int y)
 		}
 		for (size_t i = 0; i < this->_settings.hyperParametersSlider.size(); i++)
 		{
-			Slider<float> &slider = this->_settings.hyperParametersSlider[i];
+			Slider<double> &slider = this->_settings.hyperParametersSlider[i];
 			if (!slider.isMouseOn())
 				continue;
 			slider.click(x, this->_settings.hPVs[i]);
@@ -389,7 +404,7 @@ void	SelectScreen::onMouseMove(int x, int y)
 	{
 		for (size_t i = 0; i < this->_settings.hyperParametersSlider.size(); i++)
 		{
-			Slider<float> &slider = this->_settings.hyperParametersSlider[i];
+			Slider<double> &slider = this->_settings.hyperParametersSlider[i];
 			if (!slider.isMouseOn())
 				continue;
 			slider.click(x, this->_settings.hPVs[i]);

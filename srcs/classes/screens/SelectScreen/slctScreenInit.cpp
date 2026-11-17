@@ -22,24 +22,33 @@ SelectScreen::SelectScreen(size_t width, size_t height, Engine &engine): IScreen
 				for (size_t i = 0; i < this->_settings.hyperParametersSlider.size(); i++)
 					this->_settings.hyperParametersSlider[i].desactivate();
 			}
-		)}), _settings((settings){nullptr, false, false, TextBox(), 10, Slider<size_t>(),
-			10, Slider<size_t>(), textCo(), textCo(), textCo(), std::vector<Rectangle>(),
-			std::array<Button, 3>(), std::array<Button, 2>(), std::array<Button, 2>(), std::array<Button, 2>(), true,
-			std::array<float, 3>({0.1f, 0.92f, 0.9}), textCo(), std::array<Slider<float>, 3>(),
-			std::vector<Button>()})
+		)}),
+	_settings((settings){nullptr, false, false, TextBox(), 10, Slider<size_t>(),
+		10, Slider<size_t>(), textCo(), textCo(), textCo(), std::vector<Rectangle>(),
+		std::array<Button, 3>(), std::array<Button, 2>(), std::array<Button, 2>(), std::array<Button, 2>(), true,
+		std::array<Button, 2>(), true, std::array<double, 3>({0.1f, 0.92f, 0.9}),
+		textCo(), std::array<Slider<double>, 3>(), std::vector<Button>()})
 {
+	settings &sett = this->_settings;
 	this->_buttons.emplace_back((box){30, 15, 150, 30}, 0x1A2113, 0x8DB600,
 			0x8DB600, 0x8DB600, 0x8DB600, 0x8DB600, Text("Back", 1.f, 0xC5E063, 0x12170D), true,
 			[width, height, &engine]()
 			{
 				engine.prepareNextScreen(std::make_unique<TitleScreen>(width, height, engine));
 			});
-	this->_buttons.emplace_back((box){991, (int)this->_height - 60, 150, 40},
+	this->_buttons.emplace_back((box){1078, (int)this->_height - 142, 300, 50},
 			0x8DB600, 0xA8D41F, 0x8DB600, 0x8DB600, 0x8DB600, 0x8DB600,
 			Text("Launch", 1.f, 0x12170D, 0x12170D), true,
-			[&engine]()
+			[width, height, &engine, &sett]()
 			{
-				(void)engine;
+				Board b(sett.height, sett.width);
+				Agent a;
+				if (sett.useModel)
+					a = *sett.model;
+				else
+					a = Agent(sett.hPVs[0], sett.hPVs[1], sett.hPVs[2], sett.exportInput.getText());
+				a.setTraining(sett.learning);
+				engine.prepareNextScreen(std::make_unique<GameScreen>(width, height, engine, b, a, sett.visualDisplay, sett.exportInput.getText()));
 			});
 
 	this->_fileListRect = Rectangle((box){30, 125, 651, 595}, 0x1F281A, 2, 0x3A4A2E);
@@ -213,7 +222,23 @@ void	SelectScreen::initSettings(void)
 		}
 	);
 
-	sett.onOffExport[0] = Button((box){1085, 497, 140, 30}, 0x283322, 0x2F3C28,
+	sett.onOffDisplay[0] = Button((box){1085, 497, 140, 30}, 0x283322, 0x2F3C28,
+		0x4a5a3a, 0x6B8E00, 0x2F3C28, 0x6B8E00, Text("On", 0.9f, 0xC5E063, 0xC5E063), true,
+		[&sett]()
+		{
+			sett.visualDisplay = true;
+		}
+	);
+	sett.onOffDisplay[0].setPressed(true);
+	sett.onOffDisplay[1] = Button((box){1233, 497, 140, 30}, 0x283322, 0x2F3C28,
+		0x4a5a3a, 0x6B8E00, 0x2F3C28, 0x6B8E00, Text("Off", 0.9f, 0xC5E063, 0xC5E063), true,
+		[&sett]()
+		{
+			sett.visualDisplay = false;
+		}
+	);
+
+	sett.onOffExport[0] = Button((box){1085, 567, 140, 30}, 0x283322, 0x2F3C28,
 		0x4a5a3a, 0x6B8E00, 0x2F3C28, 0x6B8E00, Text("On", 0.9f, 0xC5E063, 0xC5E063), true,
 		[&sett]()
 		{
@@ -221,7 +246,7 @@ void	SelectScreen::initSettings(void)
 			sett.exportInput.activate();
 		}
 	);
-	sett.onOffExport[1] = Button((box){1233, 497, 140, 30}, 0x283322, 0x2F3C28,
+	sett.onOffExport[1] = Button((box){1233, 567, 140, 30}, 0x283322, 0x2F3C28,
 		0x4a5a3a, 0x6B8E00, 0x2F3C28, 0x6B8E00, Text("Off", 0.9f, 0xC5E063, 0xC5E063), true,
 		[&sett]()
 		{
@@ -232,14 +257,14 @@ void	SelectScreen::initSettings(void)
 	sett.onOffExport[1].setPressed(true);
 
 	sett.exportInput = TextBox(Text("", 0.9, 0xC5E063, 0x9AA88A),
-		Rectangle((box){1085, 537, 288, 30}, 0x283322, 2, 0x4a5a3a), 0x283322, 0x2A3622);
+		Rectangle((box){1085, 607, 288, 30}, 0x283322, 2, 0x4a5a3a), 0x283322, 0x2A3622);
 
 	sett.rectangles.emplace_back(
 		Rectangle((box){753, 137, 302, 200}, 0x283322, 2, 0x3A4A2E));
 	sett.rectangles.emplace_back(
 		Rectangle((box){753, 367, 302, 341}, 0x283322, 2, 0x3A4A2E));
 	sett.rectangles.emplace_back(
-		Rectangle((box){1078, 137, 302, 450}, 0x283322, 2, 0x3A4A2E));
+		Rectangle((box){1078, 137, 302, 510}, 0x283322, 2, 0x3A4A2E));
 	
 	sett.titles.emplace_back(std::make_pair(
 		Text("BOARD SIZE", 1.2f, 0xC5E063, 0xC5E063),
@@ -255,9 +280,9 @@ void	SelectScreen::initSettings(void)
 	sett.wSlider = Slider<size_t>((box){764, 222, 280, 3}, 0x3A4A2E, 0x2A3622, 0x8DB600, 0xF2F7E6, 0x4a5a3a, 0x6B8E00, 0x5E6B50, 0x5E6B50, 10, 40);
 	sett.hSlider = Slider<size_t>((box){764, 272, 280, 3}, 0x3A4A2E, 0x2A3622, 0x8DB600, 0xF2F7E6, 0x4a5a3a, 0x6B8E00, 0x5E6B50, 0x5E6B50, 10, 40);
 
-	sett.hyperParametersSlider[0] = Slider<float>((box){1089, 282, 280, 3}, 0x3A4A2E, 0x2A3622, 0x8DB600, 0xF2F7E6, 0x4a5a3a, 0x6B8E00, 0x5E6B50, 0x5E6B50, 0.001f, 0.999f);
-	sett.hyperParametersSlider[1] = Slider<float>((box){1089, 332, 280, 3}, 0x3A4A2E, 0x2A3622, 0x8DB600, 0xF2F7E6, 0x4a5a3a, 0x6B8E00, 0x5E6B50, 0x5E6B50, 0.001f, 0.999f);
-	sett.hyperParametersSlider[2] = Slider<float>((box){1089, 382, 280, 3}, 0x3A4A2E, 0x2A3622, 0x8DB600, 0xF2F7E6, 0x4a5a3a, 0x6B8E00, 0x5E6B50, 0x5E6B50, 0.001f, 0.999f);
+	sett.hyperParametersSlider[0] = Slider<double>((box){1089, 282, 280, 3}, 0x3A4A2E, 0x2A3622, 0x8DB600, 0xF2F7E6, 0x4a5a3a, 0x6B8E00, 0x5E6B50, 0x5E6B50, 0.001, 0.999);
+	sett.hyperParametersSlider[1] = Slider<double>((box){1089, 332, 280, 3}, 0x3A4A2E, 0x2A3622, 0x8DB600, 0xF2F7E6, 0x4a5a3a, 0x6B8E00, 0x5E6B50, 0x5E6B50, 0.001, 0.999);
+	sett.hyperParametersSlider[2] = Slider<double>((box){1089, 382, 280, 3}, 0x3A4A2E, 0x2A3622, 0x8DB600, 0xF2F7E6, 0x4a5a3a, 0x6B8E00, 0x5E6B50, 0x5E6B50, 0.001, 0.999);
 
 	for (int i = 0; i < 150; i+=50)
 	{
@@ -289,9 +314,11 @@ void	SelectScreen::initSettings(void)
 		Text("Learning", 1.1f, 0xD0D8C4, 0x9AA88A),
 		std::array<int, 2>{1085, 407}));
 	sett.names.emplace_back(std::make_pair(
-		Text("Save model at the end", 1.1f, 0xD0D8C4, 0x9AA88A),
+		Text("Visual display", 1.1f, 0xD0D8C4, 0x9AA88A),
 		std::array<int, 2>{1085, 477}));
-	
+	sett.names.emplace_back(std::make_pair(
+		Text("Save model at the end", 1.1f, 0xD0D8C4, 0x9AA88A),
+		std::array<int, 2>{1085, 547}));
 
 
 	sett.values.emplace_back(std::make_pair(

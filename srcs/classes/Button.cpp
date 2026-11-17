@@ -147,8 +147,8 @@ void	Button::render(Image &img)
 		clip.h -= this->_borderWidth * 2;
 
 		const int textW = (int)this->_text.pxSize();
-		const int maxX  = clip.x;
-		const int minX  = clip.x + clip.w - textW;
+		const int maxX  = clip.x + 2;
+		const int minX  = clip.x + clip.w - textW - 2;
 
 		this->_text.renderClip(this->_textX, clip.y + (clip.h / 2),
 						img, clip, Text::HAlign::Left, Text::VAlign::Center, col);
@@ -218,8 +218,8 @@ void	Button::renderClip(Image &img, box &clip)
 		cliped.h -= this->_borderWidth * 2;
 
 		const int textW = (int)this->_text.pxSize();
-		const int maxX  = cliped.x;
-		const int minX  = cliped.x + cliped.w - textW;
+		const int maxX  = cliped.x + 2;
+		const int minX  = cliped.x + cliped.w - textW - 2;
 
 		this->_text.renderClip(this->_textX, this->_dimentions.y + (this->_dimentions.h / 2),
 						img, cliped, Text::HAlign::Left, Text::VAlign::Center, col);
