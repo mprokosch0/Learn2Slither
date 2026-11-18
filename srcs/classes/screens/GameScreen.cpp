@@ -1,9 +1,10 @@
 #include "learn2Slither.hpp"
 
 GameScreen::GameScreen(size_t width, size_t height, Engine &engine,
-	Board board, Agent agent, bool visualDisplay, std::string exportName):
-	IScreen(width, height), _board(board), _agent(agent),
-	_visualDisplay(visualDisplay), _exportName(exportName)
+	Board board, Agent agent, unsigned int nbGames,
+	bool visualDisplay, std::string exportName):
+	IScreen(width, height), _board(board), _agent(agent), _nbGames(nbGames),
+	_visualDisplay(visualDisplay), _exportName(exportName), _snakeText(engine.getTextures().at("Snake.xpm"))
 {
 	(void)engine;
 }
@@ -41,4 +42,5 @@ void	GameScreen::onMouseMove(int x, int y)
 void	GameScreen::render(Image &img)
 {
 	img.colorImage(0x00aa33);
+	this->_snakeText.applyBloc(img, std::make_pair(12, 3), 0, 0);
 }

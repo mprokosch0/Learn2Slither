@@ -96,10 +96,13 @@ void	SelectScreen::renderSettings(Image &img)
 	for (Slider<double> &s : sett.hyperParametersSlider)
 		s.render(img);
 	
+	sett.nbGamesBox.render(img);
+
 	sett.exportInput.render(img);
 
 	sett.wSlider.render(img);
 	sett.hSlider.render(img);
+
 }
 
 void	SelectScreen::renderPreview(Image &img) const

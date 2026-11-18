@@ -41,6 +41,16 @@ Engine::~Engine()
 	free(this->_mlx);
 }
 
+const std::unordered_map<std::string, Texture>	&Engine::getTextures(void) const
+{
+	return this->_textures;
+}
+
+void	Engine::addTexture(std::string path, std::pair<int, int> blockSize)
+{
+	this->_textures.try_emplace(path, this->_mlx, path, blockSize);
+}
+
 int		Engine::loopTrampoline(void *self)
 {
 	try

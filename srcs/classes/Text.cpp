@@ -46,6 +46,7 @@ const std::string	&Text::getText(void) const
 void	Text::addChar(char c, size_t pos)
 {
 	this->_text.insert(this->_text.begin() + pos, 1, c);
+	this->_width = Image::getStringSize(this->_text, this->_zoom);
 }
 
 void	Text::deleteChar(size_t pos)
@@ -54,6 +55,7 @@ void	Text::deleteChar(size_t pos)
 		this->_text.pop_back();
 	else
 		this->_text.erase(pos, 1);
+	this->_width = Image::getStringSize(this->_text, this->_zoom);
 }
 
 size_t	Text::pxSize(void) const

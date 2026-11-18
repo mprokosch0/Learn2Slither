@@ -16,6 +16,7 @@ SRCS =	srcs/main.cpp \
 		srcs/classes/TextBox.cpp \
 		srcs/classes/Rectangle.cpp \
 		srcs/classes/Button.cpp \
+		srcs/classes/Texture.cpp \
 		srcs/classes/screens/IScreen.cpp \
 		srcs/classes/screens/TitleScreen.cpp \
 		srcs/classes/screens/SelectScreen/SelectScreen.cpp \

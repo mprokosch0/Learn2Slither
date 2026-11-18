@@ -58,7 +58,6 @@ void	Board::prepareGrid(void)
 Board::Board(size_t rows, size_t cols): _rows(rows + 2), _cols(cols + 2),
 	_lose(false), _win(false)
 {
-	std::cout << rows << ", " << cols << std::endl;
 	if (rows < 10 || rows > 40)
 		throw std::invalid_argument("Board: error: rows size must be between"
 			 " [10-40] instead got: " + std::to_string(rows));

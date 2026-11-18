@@ -142,26 +142,51 @@ class Image
 
 };
 
+class Texture
+{
+	private:
+		void				*_mlx;
+		void				*_img;
+		char				*_addr;
+		int					_bitsPerPixel;
+		int					_lineLength;
+		int					_endian;
+		int					_width;
+		int					_height;
+		std::pair<int, int>	_blockSize;
+	
+
+	public:
+		Texture(void);
+		Texture(void *mlx, std::string path, std::pair<int, int> blockSize);
+		~Texture();
+
+	public:
+		void	*getImg(void) const;
+		void	applyBloc(Image &img, std::pair<int, int> bloc, int x, int y) const;
+		void	applyAll(Image &img, int x, int y) const;
+};
+
 class Button
 {
 	private:
-		static int									_borderWidth;
-		Text										_text;
-		int											_textX;
-		bool										_ascend;
-		std::chrono::_V2::steady_clock::time_point	_tPoint;
-		int											_renderCount;
-		box											_dimentions;
-		int											_color;
-		int											_hoverColor;
-		int											_borderColor;
-		int											_borderHoverColor;
-		int											_pressedColor;
-		int											_pressedBorderColor;
-		bool										_hover;
-		bool										_active;
-		bool										_pressed;
-		std::function<void()>						_onClickFunction;
+		static int								_borderWidth;
+		Text									_text;
+		int										_textX;
+		bool									_ascend;
+		std::chrono::steady_clock::time_point	_tPoint;
+		int										_renderCount;
+		box										_dimentions;
+		int										_color;
+		int										_hoverColor;
+		int										_borderColor;
+		int										_borderHoverColor;
+		int										_pressedColor;
+		int										_pressedBorderColor;
+		bool									_hover;
+		bool									_active;
+		bool									_pressed;
+		std::function<void()>					_onClickFunction;
 	
 	public:
 		Button(void);
@@ -192,33 +217,41 @@ class Button
 
 class TextBox
 {
+	public:
+		enum class Mode {TEXT, UNSIGNED_INT};
+
+
 	private:
-		Rectangle									_box;
-		Text										_input;
-		size_t										_cursorPos;
-		int											_inputX;
-		bool										_focused;
-		bool										_active;
-		int											_inactiveColor;
-		int											_inactiveColorBorder;
-		std::chrono::_V2::steady_clock::time_point	_tPoint;
+		Rectangle								_box;
+		Text									_input;
+		size_t									_cursorPos;
+		int										_scrollX;
+		bool									_focused;
+		bool									_active;
+		int										_inactiveColor;
+		int										_inactiveColorBorder;
+		std::chrono::steady_clock::time_point	_tPoint;
+		Mode									_mode;
+		bool									_error;
 	
-	
+
 	public:
 		TextBox(void);
 		TextBox(Text txt, Rectangle box, int inactiveColor, int inactiveColorBorder);
 		~TextBox();
 	
 	public:
-		bool		isFocused(void) const;
-		bool		isMouseOn(int x, int y) const;
-		void		activate(void);
-		void		desactivate(void);
-		std::string	getText(void) const;
-		void		setText(std::string txt);
-		void		doAction(int keycode);
-		void		setfocus(bool focus);
-		void		render(Image &img);
+		bool			isFocused(void) const;
+		bool			isMouseOn(int x, int y) const;
+		unsigned int	getUInt(void) const;
+		void			setMode(Mode mode);
+		void			activate(void);
+		void			desactivate(void);
+		std::string		getText(void) const;
+		void			setText(std::string txt);
+		void			doAction(int keycode);
+		void			setfocus(bool focus);
+		void			render(Image &img);
 };
 
 template<typename T>
@@ -370,6 +403,8 @@ class SelectScreen : public IScreen
 			std::array<double, 3>			hPVs;
 			textCo							hyperParametersValues;
 			std::array<Slider<double>, 3>	hyperParametersSlider;
+			unsigned int					nbGames;
+			TextBox							nbGamesBox;
 			std::vector<Button>				buttons;
 		};
 
@@ -412,15 +447,18 @@ class SelectScreen : public IScreen
 class GameScreen : public IScreen
 {
 	private:
-		Board		_board;
-		Agent		_agent;
-		bool		_visualDisplay;
-		std::string	_exportName;
+		Board			_board;
+		Agent			_agent;
+		unsigned int	_nbGames;
+		bool			_visualDisplay;
+		std::string		_exportName;
+		const Texture	&_snakeText;
 	
 
 	public:
 		GameScreen(size_t width, size_t height, Engine &engine,
-			Board board, Agent agent, bool visualDisplay, std::string exportName);
+			Board board, Agent agent, unsigned int nbGames,
+			bool visualDisplay, std::string exportName);
 	
 	public:
 		void	update() override;
@@ -455,14 +493,15 @@ enum events
 class Engine
 {
 	private:
-		void						*_mlx;
-		void						*_mlx_win;
-		size_t						_width;
-		size_t						_height;
-		Image						_img;
-		std::unique_ptr<IScreen>	_screen;
-		std::unique_ptr<IScreen>	_nextScreen;
-		std::exception_ptr			_error;
+		void										*_mlx;
+		void										*_mlx_win;
+		size_t										_width;
+		size_t										_height;
+		Image										_img;
+		std::unique_ptr<IScreen>					_screen;
+		std::unique_ptr<IScreen>					_nextScreen;
+		std::unordered_map<std::string, Texture>	_textures;
+		std::exception_ptr							_error;
 
 	private:
 		static int	loopTrampoline(void *self);
@@ -484,9 +523,11 @@ class Engine
 		~Engine();
 	
 	public:
-		void	prepareNextScreen(std::unique_ptr<IScreen> next);
-		void	run(void);
-		void	quit(void);
+		const std::unordered_map<std::string, Texture>	&getTextures(void) const;
+		void											prepareNextScreen(std::unique_ptr<IScreen> next);
+		void											addTexture(std::string path, std::pair<int, int> blockSize);
+		void											run(void);
+		void											quit(void);
 };
 
 #endif

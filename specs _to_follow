@@ -1,4 +1,4 @@
-- grid must be min 10x10 and max size of 50x50 (but can be a rectangle)
+- grid must be min 10x10 and max size of 40x40 (but can be a rectangle)
 - models must be trained unindependantly from the grid size
 - font is 14px in height
 
@@ -7,6 +7,6 @@
 
 - Rewards:	- eat red apple: 	-10 pts
 			- eat green apple:	+10 pts
-			- eat nothing:		-0.1 pts
-			- Game over:		-100 pts
-			- Win:				+100 pts
+			- eat nothing:		-0.3 pts
+			- Game over:		-50 pts
+			- Win:				+50 pts

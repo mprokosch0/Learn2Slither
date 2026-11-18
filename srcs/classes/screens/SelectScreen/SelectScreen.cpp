@@ -214,6 +214,12 @@ void	SelectScreen::onKeyDown(int keycode)
 			keycode -= 32;
 		this->_settings.exportInput.doAction(keycode);
 	}
+	if (this->_settings.nbGamesBox.isFocused())
+	{
+		if (this->_hooks.lShiftKey && std::isalpha(keycode))
+			keycode -= 32;
+		this->_settings.nbGamesBox.doAction(keycode);
+	}
 	updateKeyHooks(static_cast<keycodes>(keycode), HOOK_DOWN);
 }
 
@@ -371,6 +377,10 @@ void	SelectScreen::onMouseDown(int button, int x, int y)
 		}
 		if (this->_selectedFile.file && this->_selectedFile.useModel.isMouseOn())
 			this->_selectedFile.useModel.click();
+		if (this->_settings.nbGamesBox.isMouseOn(x, y))
+			this->_settings.nbGamesBox.setfocus(true);
+		else
+			this->_settings.nbGamesBox.setfocus(false);
 		if (this->_settings.exportInput.isMouseOn(x, y))
 			this->_settings.exportInput.setfocus(true);
 		else

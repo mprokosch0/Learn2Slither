@@ -27,7 +27,7 @@ SelectScreen::SelectScreen(size_t width, size_t height, Engine &engine): IScreen
 		10, Slider<size_t>(), textCo(), textCo(), textCo(), std::vector<Rectangle>(),
 		std::array<Button, 3>(), std::array<Button, 2>(), std::array<Button, 2>(), std::array<Button, 2>(), true,
 		std::array<Button, 2>(), true, std::array<double, 3>({0.1f, 0.92f, 0.9}),
-		textCo(), std::array<Slider<double>, 3>(), std::vector<Button>()})
+		textCo(), std::array<Slider<double>, 3>(), 1000, TextBox(), std::vector<Button>()})
 {
 	settings &sett = this->_settings;
 	this->_buttons.emplace_back((box){30, 15, 150, 30}, 0x1A2113, 0x8DB600,
@@ -36,7 +36,7 @@ SelectScreen::SelectScreen(size_t width, size_t height, Engine &engine): IScreen
 			{
 				engine.prepareNextScreen(std::make_unique<TitleScreen>(width, height, engine));
 			});
-	this->_buttons.emplace_back((box){1078, (int)this->_height - 142, 300, 50},
+	this->_buttons.emplace_back((box){1078, (int)this->_height - 65, 300, 50},
 			0x8DB600, 0xA8D41F, 0x8DB600, 0x8DB600, 0x8DB600, 0x8DB600,
 			Text("Launch", 1.f, 0x12170D, 0x12170D), true,
 			[width, height, &engine, &sett]()
@@ -48,7 +48,8 @@ SelectScreen::SelectScreen(size_t width, size_t height, Engine &engine): IScreen
 				else
 					a = Agent(sett.hPVs[0], sett.hPVs[1], sett.hPVs[2], sett.exportInput.getText());
 				a.setTraining(sett.learning);
-				engine.prepareNextScreen(std::make_unique<GameScreen>(width, height, engine, b, a, sett.visualDisplay, sett.exportInput.getText()));
+				engine.prepareNextScreen(std::make_unique<GameScreen>(width, height, engine, b, a, sett.nbGamesBox.getUInt(),
+					sett.visualDisplay, sett.exportInput.getText()));
 			});
 
 	this->_fileListRect = Rectangle((box){30, 125, 651, 595}, 0x1F281A, 2, 0x3A4A2E);
@@ -206,7 +207,7 @@ void	SelectScreen::initSettings(void)
 		}
 	);
 
-	sett.onOffLearning[0] = Button((box){1085, 427, 140, 30}, 0x283322, 0x2F3C28,
+	sett.onOffLearning[0] = Button((box){1085, 477, 140, 30}, 0x283322, 0x2F3C28,
 		0x4a5a3a, 0x6B8E00, 0x2F3C28, 0x6B8E00, Text("On", 0.9f, 0xC5E063, 0xC5E063), true,
 		[&sett]()
 		{
@@ -214,7 +215,7 @@ void	SelectScreen::initSettings(void)
 		}
 	);
 	sett.onOffLearning[0].setPressed(true);
-	sett.onOffLearning[1] = Button((box){1233, 427, 140, 30}, 0x283322, 0x2F3C28,
+	sett.onOffLearning[1] = Button((box){1233, 477, 140, 30}, 0x283322, 0x2F3C28,
 		0x4a5a3a, 0x6B8E00, 0x2F3C28, 0x6B8E00, Text("Off", 0.9f, 0xC5E063, 0xC5E063), true,
 		[&sett]()
 		{
@@ -222,7 +223,7 @@ void	SelectScreen::initSettings(void)
 		}
 	);
 
-	sett.onOffDisplay[0] = Button((box){1085, 497, 140, 30}, 0x283322, 0x2F3C28,
+	sett.onOffDisplay[0] = Button((box){1085, 547, 140, 30}, 0x283322, 0x2F3C28,
 		0x4a5a3a, 0x6B8E00, 0x2F3C28, 0x6B8E00, Text("On", 0.9f, 0xC5E063, 0xC5E063), true,
 		[&sett]()
 		{
@@ -230,7 +231,7 @@ void	SelectScreen::initSettings(void)
 		}
 	);
 	sett.onOffDisplay[0].setPressed(true);
-	sett.onOffDisplay[1] = Button((box){1233, 497, 140, 30}, 0x283322, 0x2F3C28,
+	sett.onOffDisplay[1] = Button((box){1233, 547, 140, 30}, 0x283322, 0x2F3C28,
 		0x4a5a3a, 0x6B8E00, 0x2F3C28, 0x6B8E00, Text("Off", 0.9f, 0xC5E063, 0xC5E063), true,
 		[&sett]()
 		{
@@ -238,7 +239,7 @@ void	SelectScreen::initSettings(void)
 		}
 	);
 
-	sett.onOffExport[0] = Button((box){1085, 567, 140, 30}, 0x283322, 0x2F3C28,
+	sett.onOffExport[0] = Button((box){1085, 617, 140, 30}, 0x283322, 0x2F3C28,
 		0x4a5a3a, 0x6B8E00, 0x2F3C28, 0x6B8E00, Text("On", 0.9f, 0xC5E063, 0xC5E063), true,
 		[&sett]()
 		{
@@ -246,7 +247,7 @@ void	SelectScreen::initSettings(void)
 			sett.exportInput.activate();
 		}
 	);
-	sett.onOffExport[1] = Button((box){1233, 567, 140, 30}, 0x283322, 0x2F3C28,
+	sett.onOffExport[1] = Button((box){1233, 617, 140, 30}, 0x283322, 0x2F3C28,
 		0x4a5a3a, 0x6B8E00, 0x2F3C28, 0x6B8E00, Text("Off", 0.9f, 0xC5E063, 0xC5E063), true,
 		[&sett]()
 		{
@@ -256,15 +257,20 @@ void	SelectScreen::initSettings(void)
 	);
 	sett.onOffExport[1].setPressed(true);
 
+
+	sett.nbGamesBox = TextBox(Text("1000", 0.9, 0xC5E063, 0x9AA88A),
+		Rectangle((box){1263, 407, 110, 30}, 0x283322, 2, 0x4a5a3a), 0x283322, 0x2A3622);
+	sett.nbGamesBox.activate();
+	sett.nbGamesBox.setMode(TextBox::Mode::UNSIGNED_INT);
 	sett.exportInput = TextBox(Text("", 0.9, 0xC5E063, 0x9AA88A),
-		Rectangle((box){1085, 607, 288, 30}, 0x283322, 2, 0x4a5a3a), 0x283322, 0x2A3622);
+		Rectangle((box){1085, 657, 288, 30}, 0x283322, 2, 0x4a5a3a), 0x283322, 0x2A3622);
 
 	sett.rectangles.emplace_back(
 		Rectangle((box){753, 137, 302, 200}, 0x283322, 2, 0x3A4A2E));
 	sett.rectangles.emplace_back(
 		Rectangle((box){753, 367, 302, 341}, 0x283322, 2, 0x3A4A2E));
 	sett.rectangles.emplace_back(
-		Rectangle((box){1078, 137, 302, 510}, 0x283322, 2, 0x3A4A2E));
+		Rectangle((box){1078, 137, 302, 571}, 0x283322, 2, 0x3A4A2E));
 	
 	sett.titles.emplace_back(std::make_pair(
 		Text("BOARD SIZE", 1.2f, 0xC5E063, 0xC5E063),
@@ -311,14 +317,17 @@ void	SelectScreen::initSettings(void)
 		Text("Exploration rate", 1.1f, 0xD0D8C4, 0x9AA88A),
 		std::array<int, 2>{1085, 357}));
 	sett.names.emplace_back(std::make_pair(
+		Text("Game count", 1.1f, 0xD0D8C4, 0x9AA88A),
+		std::array<int, 2>{1085, 418}));
+	sett.names.emplace_back(std::make_pair(
 		Text("Learning", 1.1f, 0xD0D8C4, 0x9AA88A),
-		std::array<int, 2>{1085, 407}));
+		std::array<int, 2>{1085, 457}));
 	sett.names.emplace_back(std::make_pair(
 		Text("Visual display", 1.1f, 0xD0D8C4, 0x9AA88A),
-		std::array<int, 2>{1085, 477}));
+		std::array<int, 2>{1085, 527}));
 	sett.names.emplace_back(std::make_pair(
 		Text("Save model at the end", 1.1f, 0xD0D8C4, 0x9AA88A),
-		std::array<int, 2>{1085, 547}));
+		std::array<int, 2>{1085, 597}));
 
 
 	sett.values.emplace_back(std::make_pair(
