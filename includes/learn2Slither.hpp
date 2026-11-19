@@ -162,9 +162,10 @@ class Texture
 		~Texture();
 
 	public:
-		void	*getImg(void) const;
-		void	applyBloc(Image &img, std::pair<int, int> bloc, int x, int y) const;
-		void	applyAll(Image &img, int x, int y) const;
+		void						*getImg(void) const;
+		const std::pair<int, int>	&getBlockSize(void) const;
+		void						applyBloc(Image &img, std::pair<int, int> bloc, int x, int y, float zoom) const;
+		void						applyAll(Image &img, int x, int y, float zoom) const;
 };
 
 class Button
@@ -454,6 +455,9 @@ class GameScreen : public IScreen
 		std::string		_exportName;
 		const Texture	&_snakeText;
 	
+	private:
+		void	renderBoard(Image &img) const;
+
 
 	public:
 		GameScreen(size_t width, size_t height, Engine &engine,

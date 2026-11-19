@@ -31,7 +31,12 @@ void	*Texture::getImg(void) const
 	return this->_img;
 }
 
-void	Texture::applyBloc(Image &img, std::pair<int, int> bloc, int x, int y) const
+const std::pair<int, int>	&Texture::getBlockSize(void) const
+{
+	return this->_blockSize;
+}
+
+void	Texture::applyBloc(Image &img, std::pair<int, int> bloc, int x, int y, float zoom) const
 {
 	if (!this->_mlx || !this->_img)
 		return ;
@@ -41,27 +46,34 @@ void	Texture::applyBloc(Image &img, std::pair<int, int> bloc, int x, int y) cons
 	int xb = bloc.first * this->_blockSize.first;
 	int yb = bloc.second * this->_blockSize.second;
 	char *dst;
-	for (int i = 0; i < this->_blockSize.second; i++)
+	for (int i = 0; i < this->_blockSize.second * zoom; i++)
 	{
-		for (int j = xb; j < xb + this->_blockSize.first; j++)
+		int srcY = yb + (int)(i / zoom);
+		for (int j = 0; j < this->_blockSize.first * zoom; j++)
 		{
-			dst = this->_addr + ((yb + i) * this->_lineLength + j * (this->_bitsPerPixel / 8));
-			img.putPixel(x + (j - xb), y + i, *(unsigned int *)dst);
+			int srcX = xb + (int)(j / zoom);
+			dst = this->_addr + (srcY * this->_lineLength + srcX * (this->_bitsPerPixel / 8));
+			if (!(*(unsigned int *)dst >> 24))
+				img.putPixel(x + j, y + i, *(unsigned int *)dst);
 		}
 	}
 }
 
-void	Texture::applyAll(Image &img, int x, int y) const
+void	Texture::applyAll(Image &img, int x, int y, float zoom) const
 {
+	(void)zoom;
 	if (!this->_mlx || !this->_img)
 		return ;
 	char *dst;
-	for (int i = 0; i < this->_height; i++)
+	for (int i = 0; i < this->_height * zoom; i++)
 	{
-		for (int j = 0; j < this->_width; j++)
+		int srcY = i / zoom;
+		for (int j = 0; j < this->_width * zoom; j++)
 		{
-			dst = this->_addr + (i * this->_lineLength + j * (this->_bitsPerPixel / 8));
-			img.putPixel(x + j, y + i, *(unsigned int *)dst);
+			int srcX = j / zoom;
+			dst = this->_addr + (srcY * this->_lineLength + srcX * (this->_bitsPerPixel / 8));
+			if (!(*(unsigned int *)dst >> 24))
+				img.putPixel(x + j, y + i, *(unsigned int *)dst);
 		}
 	}
 }

@@ -120,6 +120,11 @@ const std::pair<int, int>	&Board::getSnakeHeadPos(void) const
 	return this->_snake.getHeadPos();
 }
 
+const std::vector<std::pair<int, int>>	&Board::getSnakePos(void) const
+{
+	return this->_snake.getPos();
+}
+
 size_t	Board::getSnakeSize(void) const
 {
 	return this->_snake.size();
@@ -246,38 +251,13 @@ static std::string getGridVal(GridValues val)
 	}
 }
 
-// std::ostream &operator<<(std::ostream &os, const Board &board)
-// {
-// 	const std::vector<std::vector<GridValues>> &grid  = board.getGrid();
-// 	// const std::pair<int, int> &hPos = board.getSnakeHeadPos();
-
-// 	// const int x = hPos.first;
-// 	// const int y = hPos.second;
-
-
-// 	for (size_t i = 0; i < grid.size(); i++)
-// 	{
-// 		os << '[';
-// 		for (size_t j = 0; j < grid[i].size(); j++)
-// 		{
-// 			os << getGridVal(grid[i][j]);
-// 			if (j + 1 != grid[i].size())
-// 				os << " ";
-// 		}
-// 		os << ']';
-// 		if (i + 1 != grid.size())
-// 			os << std::endl;
-// 	}
-// 	return os;
-// }
-
 std::ostream &operator<<(std::ostream &os, const Board &board)
 {
 	const std::vector<std::vector<GridValues>> &grid  = board.getGrid();
-	const std::pair<int, int> &hPos = board.getSnakeHeadPos();
+	// const std::pair<int, int> &hPos = board.getSnakeHeadPos();
 
-	const int x = hPos.first;
-	const int y = hPos.second;
+	// const int x = hPos.first;
+	// const int y = hPos.second;
 
 
 	for (size_t i = 0; i < grid.size(); i++)
@@ -285,10 +265,7 @@ std::ostream &operator<<(std::ostream &os, const Board &board)
 		os << '[';
 		for (size_t j = 0; j < grid[i].size(); j++)
 		{
-			if ((int)j == x || (int)i == y)
-				os << getGridVal(grid[i][j]);
-			else
-				os << ' ';
+			os << getGridVal(grid[i][j]);
 			if (j + 1 != grid[i].size())
 				os << " ";
 		}
@@ -298,6 +275,34 @@ std::ostream &operator<<(std::ostream &os, const Board &board)
 	}
 	return os;
 }
+
+// std::ostream &operator<<(std::ostream &os, const Board &board)
+// {
+// 	const std::vector<std::vector<GridValues>> &grid  = board.getGrid();
+// 	const std::pair<int, int> &hPos = board.getSnakeHeadPos();
+
+// 	const int x = hPos.first;
+// 	const int y = hPos.second;
+
+
+// 	for (size_t i = 0; i < grid.size(); i++)
+// 	{
+// 		os << '[';
+// 		for (size_t j = 0; j < grid[i].size(); j++)
+// 		{
+// 			if ((int)j == x || (int)i == y)
+// 				os << getGridVal(grid[i][j]);
+// 			else
+// 				os << ' ';
+// 			if (j + 1 != grid[i].size())
+// 				os << " ";
+// 		}
+// 		os << ']';
+// 		if (i + 1 != grid.size())
+// 			os << std::endl;
+// 	}
+// 	return os;
+// }
 
 std::ostream	&operator<<(std::ostream &os, const std::vector<std::vector<GridValues>> &views)
 {

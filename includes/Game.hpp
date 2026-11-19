@@ -95,6 +95,7 @@ class Board
 		const std::vector<std::vector<GridValues>>	&getGrid(void) const;
 		const std::vector<std::vector<GridValues>>	getSnakeViews(void) const;
 		const std::pair<int, int>					&getSnakeHeadPos(void) const;
+		const std::vector<std::pair<int, int>>		&getSnakePos(void) const;
 		const Directions							&getSnakeOrientation(void) const;
 		size_t										getSnakeSize(void) const;
 		double										snakeMove(Actions dir);
