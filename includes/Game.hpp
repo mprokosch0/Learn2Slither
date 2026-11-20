@@ -92,6 +92,8 @@ class Board
 		const std::vector<GridValues>	&operator[](size_t index) const;
 	
 	public:
+		size_t										getWidth(void) const;
+		size_t										getHeight(void) const;
 		const std::vector<std::vector<GridValues>>	&getGrid(void) const;
 		const std::vector<std::vector<GridValues>>	getSnakeViews(void) const;
 		const std::pair<int, int>					&getSnakeHeadPos(void) const;

@@ -1,6 +1,7 @@
 #include "learn2Slither.hpp"
 
-TitleScreen::TitleScreen(size_t width, size_t height, Engine &engine): IScreen(width, height)
+TitleScreen::TitleScreen(size_t width, size_t height, Engine &engine): IScreen(width, height),
+	_theme(engine.getTheme())
 {
 	this->_buttons.emplace_back((box){(static_cast<int>(width) / 2) - 100,
 			(static_cast<int>(height) / 2) + 75, 200, 50}, 0x407560, 0x407560,

@@ -26,10 +26,11 @@ void	SelectScreen::renderScrollList(Image &img)
 
 void	SelectScreen::renderSelectedFile(Image &img)
 {
-	Text txt(this->_selectedFile.file->getName(), 1.f, 0xC8E65A, 0xC8E65A);
+	const Theme &t = THEMES[this->_theme % 3];
+	Text txt(this->_selectedFile.file->getName(), 1.f, t.title, t.title);
 	box clip = {355, 125, 323, 35};
 	txt.renderClip(363, 145, img, clip, Text::HAlign::Left, Text::VAlign::Center);
-	img.putHLine(160, 355, 681, 0x3A4A2C, 3);
+	img.putHLine(160, 355, 681, t.borderBox, 3);
 	if (!this->_selectedFile.file->getGamePlayed())
 	{
 		Text err("Invalid model file", 1.5f, 0xD9644A, 0xD9644A);
@@ -107,6 +108,7 @@ void	SelectScreen::renderSettings(Image &img)
 
 void	SelectScreen::renderPreview(Image &img) const
 {
+	const Theme &t = THEMES[this->_theme % 3];
 	int width = static_cast<int>(this->_settings.width) * 7;
 	int height = static_cast<int>(this->_settings.height) * 7;
 	box board =
@@ -117,18 +119,19 @@ void	SelectScreen::renderPreview(Image &img) const
 		.h = height
 	};
 
-	img.putRectangleBorder(board, 0x8DB600, 1, 0x3A4A2E);
+	img.putRectangleBorder(board, t.boardA, 1, t.boardB);
 
 	for (int i = board.x + 7; i < board.x + width; i += 7)
-		img.putVLine(i, board.y, board.y + board.h, 0x3A4A2E, 1);
+		img.putVLine(i, board.y, board.y + board.h, t.boardB, 1);
 	
 	for (int j = board.y + 7; j < board.y + height; j += 7)
-		img.putHLine(j, board.x, board.x + board.w, 0x3A4A2E, 1);
+		img.putHLine(j, board.x, board.x + board.w, t.boardB, 1);
 }
 
 void	SelectScreen::render(Image &img)
 {
-	img.colorImage(0x12170D);
+	const Theme &t = THEMES[this->_theme % 3];
+	img.colorImage(t.windowBg);
 	this->_fileListRect.render(img);
 	for (Rectangle &rect : this->_rectangles)
 		rect.render(img);
@@ -139,9 +142,9 @@ void	SelectScreen::render(Image &img)
 	for (const std::pair<Text, std::array<int, 2>> &pair : this->_texts)
 		pair.first.render(pair.second[0], pair.second[1], img);
 
-	img.putVLine(this->_width / 2, 60, this->_height, 0x3A4A2E, 3);
-	img.putVLine(1066, 125, 720, 0x3A4A2E, 3);
-	img.putVLine(355, 125, 720, 0x3A4A2E, 3);
+	img.putVLine(this->_width / 2, 60, this->_height, t.borderBox, 3);
+	img.putVLine(1066, 125, 720, t.borderBox, 3);
+	img.putVLine(355, 125, 720, t.borderBox, 3);
 
 	for (Button &but : this->_buttons)
 		but.render(img);

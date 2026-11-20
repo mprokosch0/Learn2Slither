@@ -324,6 +324,37 @@ enum class keycodes
 	NINE = 65434
 };
 
+struct Theme
+{
+	int windowBg, header, panel, disabled, inner, hover;
+	int borderBox, borderBtn, muted, borderHover;
+	int accent, accentHover;
+	int title, textSecondary, textMain, textBright;
+	int boardA, boardB;
+};
+
+inline Theme THEMES[3] =
+{
+	// Désert
+	{0x492100, 0x492100, 0x642D00, 0x642D00, 0x8B4003, 0x976600,
+	 0x8B480F, 0x976600, 0x976600, 0xCA8900,
+	 0xFFAD00, 0xFFE300,
+	 0xFFAD00, 0xE4BF76, 0xF7D798, 0xFFFFFF,
+	 0xA66B35, 0x805024},
+	// Plaine
+	{0x003B09, 0x003B09, 0x00500C, 0x00500C, 0x046807, 0x087D19,
+	 0x007812, 0x009E18, 0x54B657, 0x06A618,
+	 0x24D92A, 0x7CFF72,
+	 0xA5F5AD, 0xC1F5C5, 0xE5FFE8, 0xFFFFFF,
+	 0x3D9145, 0x286D32},
+	// Eau
+	{0x0B1E45, 0x0B1E45, 0x0F2A5E, 0x0F2A5E, 0x003E93, 0x1D5FB9,
+	 0x1D5FB9, 0x6190D1, 0x6190D1, 0x589DFB,
+	 0x8FB7F0, 0xFFFFFF,
+	 0x8FB7F0, 0x7CA6E0, 0xFFFFFF, 0xFFFFFF,
+	 0x36568A, 0x243F70}
+};
+
 class IScreen
 {
 	protected:
@@ -354,6 +385,9 @@ class IScreen
 
 class TitleScreen : public IScreen
 {
+	private:
+		int	&_theme;
+
 	public:
 		TitleScreen(size_t width, size_t height, Engine &engine);
 
@@ -417,6 +451,7 @@ class SelectScreen : public IScreen
 		Rectangle							_fileListRect;
 		selectedFile						_selectedFile;
 		settings							_settings;
+		int									&_theme;
 
 	private:
 		void	initModelSelection(void);
@@ -448,14 +483,44 @@ class SelectScreen : public IScreen
 class GameScreen : public IScreen
 {
 	private:
-		Board			_board;
-		Agent			_agent;
-		unsigned int	_nbGames;
-		bool			_visualDisplay;
-		std::string		_exportName;
-		const Texture	&_snakeText;
+		struct Stats
+		{
+			Rectangle	statsRect;
+		};
+		struct Options
+		{
+			Rectangle	optionsRect;
+		};
+		struct Logs
+		{
+			Rectangle	logsRect;
+		};
+		
+
+	private:
+		Board									_board;
+		Agent									_agent;
+		unsigned int							_nbGames;
+		bool									_visualDisplay;
+		float									_boardZoom;
+		std::string								_exportName;
+		const Texture							&_snakeText;
+		int										&_theme;
+		double									_stepTime;
+		std::chrono::steady_clock::time_point	_step;
+		Rectangle								_boardRect;
+		Stats									_stats;
+		Options									_options;
+		Logs									_logs;
 	
 	private:
+		void	initStats(const Theme &t);
+		void	initOptions(const Theme &t);
+		void	initLogs(const Theme &t);
+		void	renderStats(Image &img) const;
+		void	renderOptions(Image &img) const;
+		void	renderLogs(Image &img) const;
+		void	renderSnake(Image &img) const;
 		void	renderBoard(Image &img) const;
 
 
@@ -501,6 +566,7 @@ class Engine
 		void										*_mlx_win;
 		size_t										_width;
 		size_t										_height;
+		int          								_theme;
 		Image										_img;
 		std::unique_ptr<IScreen>					_screen;
 		std::unique_ptr<IScreen>					_nextScreen;
@@ -527,6 +593,7 @@ class Engine
 		~Engine();
 	
 	public:
+		int												&getTheme(void);
 		const std::unordered_map<std::string, Texture>	&getTextures(void) const;
 		void											prepareNextScreen(std::unique_ptr<IScreen> next);
 		void											addTexture(std::string path, std::pair<int, int> blockSize);

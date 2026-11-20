@@ -95,6 +95,16 @@ const std::vector<GridValues>	&Board::operator[](size_t index) const
 	return this->_grid[index];
 }
 
+size_t	Board::getWidth(void) const
+{
+	return this->_cols;
+}
+
+size_t	Board::getHeight(void) const
+{
+	return this->_rows;
+}
+
 const std::vector<std::vector<GridValues>>	&Board::getGrid(void) const
 {
 	return this->_grid;

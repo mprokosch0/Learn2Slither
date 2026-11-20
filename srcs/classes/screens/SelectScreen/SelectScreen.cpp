@@ -34,6 +34,7 @@ static int	isInVec(std::string &filename, const std::vector<Button> &buttons)
 void	SelectScreen::addEntry(void)
 {
 	std::filesystem::directory_iterator it("./models");
+	const Theme &t = THEMES[this->_theme % 3];
 	for (auto const &dirEntry : it)
 	{
 		std::string ext = dirEntry.path();
@@ -51,13 +52,13 @@ void	SelectScreen::addEntry(void)
 		}
 		std::string path = dirEntry.path();
 		box	pos = {40, y, 305, 40};
-		int color = 0x283322;
-		int hoverColor = 0x2F3C28;
-		int borderColor = 0x4a5a3a;
-		int hoverBorderColor = 0x6B8E00;
-		int pressedColor = 0x2F3C28;
-		int pressedBorderColor = 0x6B8E00;
-		Text txt(filename, 1.f, 0xE6EDD8, 0xC5E063);
+		int color = t.inner;
+		int hoverColor = t.hover;
+		int borderColor = t.borderBtn;
+		int hoverBorderColor = t.borderHover;
+		int pressedColor = t.hover;
+		int pressedBorderColor = t.borderHover;
+		Text txt(filename, 1.f, t.title, t.textBright);
 		bool active = true;
 		uintmax_t fileSize = dirEntry.file_size();
 		std::function<void()> function =

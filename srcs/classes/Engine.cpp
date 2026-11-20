@@ -1,7 +1,7 @@
 #include "learn2Slither.hpp"
 
 Engine::Engine(size_t winWidth, size_t winHeight): _width(winWidth),
-	_height(winHeight), _nextScreen(nullptr), _error(nullptr)
+	_height(winHeight), _theme(2), _nextScreen(nullptr), _error(nullptr)
 {
 	try
 	{
@@ -35,6 +35,7 @@ Engine::Engine(size_t winWidth, size_t winHeight): _width(winWidth),
 
 Engine::~Engine()
 {
+	this->_textures.clear();
 	this->_img.destroy();
 	mlx_destroy_window(this->_mlx, this->_mlx_win);
 	mlx_destroy_display(this->_mlx);
@@ -49,6 +50,11 @@ const std::unordered_map<std::string, Texture>	&Engine::getTextures(void) const
 void	Engine::addTexture(std::string path, std::pair<int, int> blockSize)
 {
 	this->_textures.try_emplace(path, this->_mlx, path, blockSize);
+}
+
+int		&Engine::getTheme(void)
+{
+	return this->_theme;
 }
 
 int		Engine::loopTrampoline(void *self)
