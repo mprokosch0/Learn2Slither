@@ -47,6 +47,16 @@ void	TextBox::desactivate(void)
 	this->_active = false;
 }
 
+void	TextBox::setColors(int textCol, int secTextCol,
+			int rectCol, int rectBorderCol,
+			int inactiveColor, int inactiveColorBorder)
+{
+	this->_input.setColors(textCol, secTextCol);
+	this->_box.setColors(rectCol, rectBorderCol);
+	this->_inactiveColor = inactiveColor;
+	this->_inactiveColorBorder = inactiveColorBorder;
+}
+
 void	TextBox::setMode(Mode mode)
 {
 	this->_mode = mode;

@@ -143,6 +143,79 @@ void	SelectScreen::updateFilesVector(void)
 		removeEntry();
 }
 
+void	SelectScreen::updateTheme(void)
+{
+	const Theme &t = THEMES[this->_theme % 3];
+
+	for (auto &f : this->_files)
+		f.setColors(t.inner, t.hover, t.borderBtn, t.borderHover,
+			t.hover, t.borderHover, t.title, t.textBright);
+	this->_title.first.setColors(t.textBright, t.textBright);
+	for (auto &txt : this->_texts)
+		txt.first.setColors(t.textSecondary, t.textSecondary);
+	this->_buttons[0].setColors(t.header, t.accent, t.accent, t.accent,
+		t.accent, t.accent, t.title, t.windowBg);
+	this->_buttons[1].setColors(t.accent, t.accentHover, t.accent,
+		t.accent, t.accent, t.accent, t.windowBg, t.windowBg);
+	this->_texts[0].first.setColors(t.title, t.title);
+	this->_texts[1].first.setColors(t.title, t.title);
+	this->_rectangles[0].setColors(t.header, t.borderBox);
+	this->_rectangles[1].setColors(t.panel, t.borderBox);
+	this->_fileListRect.setColors(t.panel, t.borderBox);
+
+	for (auto &txt : this->_selectedFile.titles)
+		txt.first.setColors(t.title, t.title);
+	for (auto &txt : this->_selectedFile.names)
+		txt.first.setColors(t.textMain, t.textMain);
+	this->_selectedFile.names[0].first.setColors(t.title, t.title);
+	for (auto &txt : this->_selectedFile.values)
+		txt.first.setColors(t.textBright, t.textBright);
+	for (auto &r : this->_selectedFile.rectangles)
+		r.setColors(t.inner, t.borderBox);
+	this->_selectedFile.useModel.setColors(t.panel, t.hover, t.accent, t.accentHover,
+			t.windowBg, t.borderHover, t.title, t.textBright);
+
+	for (auto &b : this->_settings.boardSize)
+		b.setColors(t.inner, t.hover, t.borderBox, t.borderHover,
+			t.hover, t.borderHover, t.textMain, t.textMain);
+	for (auto &b : this->_settings.buttons)
+		b.setColors(t.inner, t.hover, t.borderBox, t.borderHover,
+			t.hover, t.borderHover, t.title, t.title);
+	for (auto &b : this->_settings.onOffImport)
+		b.setColors(t.inner, t.hover, t.borderBox, t.borderHover,
+			t.hover, t.borderHover, t.title, t.title);
+	for (auto &b : this->_settings.onOffLearning)
+		b.setColors(t.inner, t.hover, t.borderBox, t.borderHover,
+			t.hover, t.borderHover, t.title, t.title);
+	for (auto &b : this->_settings.onOffDisplay)
+		b.setColors(t.inner, t.hover, t.borderBox, t.borderHover,
+			t.hover, t.borderHover, t.title, t.title);
+	for (auto &b : this->_settings.onOffExport)
+		b.setColors(t.inner, t.hover, t.borderBox, t.borderHover,
+			t.hover, t.borderHover, t.title, t.title);
+	this->_settings.nbGamesBox.setColors(t.textMain, t.textSecondary, t.inner,
+		t.borderBtn, t.inner, t.disabled);
+	this->_settings.exportInput.setColors(t.textMain, t.textSecondary, t.inner,
+		t.borderBtn, t.inner, t.disabled);
+	for (auto &r : this->_settings.rectangles)
+		r.setColors(t.inner, t.borderBox);
+	for (auto &txt : this->_settings.titles)
+		txt.first.setColors(t.title, t.title);
+	this->_settings.wSlider.setColors(t.borderBox, t.disabled, t.accent,
+		t.textBright, t.borderBtn, t.borderHover, t.muted, t.muted);
+	this->_settings.hSlider.setColors(t.borderBox, t.disabled, t.accent,
+		t.textBright, t.borderBtn, t.borderHover, t.muted, t.muted);
+	for (auto &s : this->_settings.hyperParametersSlider)
+		s.setColors(t.borderBox, t.disabled, t.accent,
+			t.textBright, t.borderBtn, t.borderHover, t.muted, t.muted);
+	for (auto &txt : this->_settings.hyperParametersValues)
+		txt.first.setColors(t.textMain, t.textSecondary);
+	for (auto &txt : this->_settings.names)
+		txt.first.setColors(t.textMain, t.textSecondary);
+	for (auto &txt : this->_settings.values)
+		txt.first.setColors(t.textMain, t.textMain);
+}
+
 void	SelectScreen::update(void)
 {
 	updateFilesVector();

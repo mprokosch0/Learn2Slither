@@ -31,6 +31,17 @@ bool	Slider<T>::isMouseOn(void) const
 }
 
 template<typename T>
+void	Slider<T>::setColors(int trackColor, int trackColorDesac, int color,
+					int hoverColor, int borderColor,
+					int borderHovercolor, int pressedColor, int pressedBorderColor)
+{
+	this->_slider.setColors(color, hoverColor, borderColor,
+		borderHovercolor, pressedColor, pressedBorderColor, 0, 0);
+	this->_trackColor = trackColor;
+	this->_trackColorDesac = trackColorDesac;
+}
+
+template<typename T>
 void	Slider<T>::clearHover(void)
 {
 	if (!this->_active)

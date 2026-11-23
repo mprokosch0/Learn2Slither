@@ -10,7 +10,7 @@ GameScreen::GameScreen(size_t width, size_t height, Engine &engine,
 	IScreen(width, height), _board(board), _agent(agent), _nbGames(nbGames),
 	_visualDisplay(visualDisplay), _boardZoom(0.f), _exportName(exportName),
 	_snakeText(engine.getTextures().at("Snake.xpm")), _theme(engine.getTheme()),
-	_stepTime(0.3), _step(), _boardRect(), _stats(), _options(), _logs()
+	_stepTime(0.01), _step(), _boardRect(), _stats(), _options(), _logs()
 {
 	(void)engine;
 	int cellSize = std::min(MAX_PIXEL_WIDTH / this->_board.getWidth(), MAX_PIXEL_HEIGHT / this->_board.getHeight());
@@ -32,27 +32,56 @@ void	GameScreen::initStats(const Theme &t)
 {
 	Stats &s = this->_stats;
 	const box &bRect = this->_boardRect.getDimentions();
-	s.statsRect = Rectangle((box){bRect.x + bRect.w + PIXEL_PAD_BOARD, PIXEL_PAD_BOARD,
-				(int)this->_width - PIXEL_PAD_BOARD - (bRect.x + bRect.w + PIXEL_PAD_BOARD), 200},
-				t.panel, 2, t.borderBox);
+	int leftX = bRect.x + bRect.w + PIXEL_PAD_BOARD;
+	s.statsRect = CornerLessRect((box){leftX, PIXEL_PAD_BOARD,
+				(int)this->_width - PIXEL_PAD_BOARD - leftX, 200},
+				t.panel, 2, t.borderBox, (uint8_t)CornerLessRect::Corners::TOP_RIGHT,
+				(box){0, 0, 95, 35});
+	
+	s.title = std::make_pair(
+		Text("Statistics", 1.2f, t.title, t.title),
+		std::array<int, 2>({leftX + 5, PIXEL_PAD_BOARD + 10}));
 }
 
 void	GameScreen::initOptions(const Theme &t)
 {
 	Options &o = this->_options;
 	const box &bRect = this->_boardRect.getDimentions();
-	o.optionsRect = Rectangle((box){bRect.x + bRect.w + PIXEL_PAD_BOARD, 218,
-				(int)this->_width - PIXEL_PAD_BOARD - (bRect.x + bRect.w + PIXEL_PAD_BOARD), 200},
+	int leftX = bRect.x + bRect.w + PIXEL_PAD_BOARD;
+	o.optionsRect = Rectangle((box){leftX, 218,
+				(int)this->_width - PIXEL_PAD_BOARD - leftX, 200},
 				t.panel, 2, t.borderBox);
+	o.title = std::make_pair(
+		Text("Options", 1.2f, t.title, t.title),
+		std::array<int, 2>({leftX + 5, 228}));
 }
 
 void	GameScreen::initLogs(const Theme &t)
 {
 	Logs &l = this->_logs;
 	const box &bRect = this->_boardRect.getDimentions();
-	l.logsRect = Rectangle((box){bRect.x + bRect.w + PIXEL_PAD_BOARD, 428,
-				(int)this->_width - PIXEL_PAD_BOARD - (bRect.x + bRect.w + PIXEL_PAD_BOARD), 364},
+	int leftX = bRect.x + bRect.w + PIXEL_PAD_BOARD;
+	l.logsRect = Rectangle((box){leftX, 428,
+				(int)this->_width - PIXEL_PAD_BOARD - leftX, 364},
 				t.panel, 2, t.borderBox);
+	l.title = std::make_pair(
+		Text("Logs", 1.2f, t.title, t.title),
+		std::array<int, 2>({leftX + 5, 438}));
+}
+
+void	GameScreen::updateTheme(void)
+{
+	const Theme &t = THEMES[this->_theme % 3];
+	this->_boardRect.setColors(t.panel, t.borderBox);
+
+	this->_stats.statsRect.setColors(t.panel, t.borderBox);
+	this->_stats.title.first.setColors(t.title, t.title);
+
+	this->_options.optionsRect.setColors(t.panel, t.borderBox);
+	this->_options.title.first.setColors(t.title, t.title);
+
+	this->_logs.logsRect.setColors(t.panel, t.borderBox);
+	this->_logs.title.first.setColors(t.title, t.title);
 }
 
 void	GameScreen::update(void)
@@ -207,18 +236,21 @@ void	GameScreen::renderStats(Image &img) const
 {
 	const Stats &s = this->_stats;
 	s.statsRect.render(img);
+	s.title.first.render(s.title.second[0], s.title.second[1], img, Text::HAlign::Left, Text::VAlign::Top);
 }
 
 void	GameScreen::renderOptions(Image &img) const
 {
 	const Options &o = this->_options;
 	o.optionsRect.render(img);
+	o.title.first.render(o.title.second[0], o.title.second[1], img, Text::HAlign::Left, Text::VAlign::Top);
 }
 
 void	GameScreen::renderLogs(Image &img) const
 {
 	const Logs &l = this->_logs;
 	l.logsRect.render(img);
+	l.title.first.render(l.title.second[0], l.title.second[1], img, Text::HAlign::Left, Text::VAlign::Top);
 }
 
 void	GameScreen::render(Image &img)

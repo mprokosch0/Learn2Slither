@@ -9,14 +9,14 @@ int main(void)
 		int		nbGames = 0;
 		long sizeDied = 0, sizeStarved = 0;
 		int  nbDied = 0, nbStarved = 0, nbReach10 = 0;
-		ai.importModel("29avg.mdl");
+		// ai.importModel("50000.mdl");
 		ai.setState(Interpreter(board.getSnakeViews(),
 				0, Actions::FORWARD, 0, 0).getState());
-		ai.setTraining(false);
+		// ai.setTraining(false);
 		int	nbMoves = 0, snakeSize = 0;
 		int max = 0, maxMove = 0;
 		int min = 0;
-		while (nbGames < 10000)
+		while (nbGames < 500000)
 		{
 			size_t moves = 0;
 			while (moves < 2500)
@@ -56,7 +56,7 @@ int main(void)
 			board.reset();
 			ai.setState(Interpreter(board.getSnakeViews(),
 				0, Actions::FORWARD, 0, 0).getState());
-			if (!(nbGames % 1000))
+			if (!(nbGames % 100))
 			{
 				std::cout << "[H[2J[3J";
 				std::cout << "Train count = " << ai.getGamePlayed() << std::endl;
@@ -73,9 +73,10 @@ int main(void)
 				std::cout << "max Snake size = " << max << std::endl;
 				std::cout << "min Snake size = " << min << std::endl;
 				std::cout << "Epsilon = " << ai.getExplRate() << std::endl;
+				std::cout << "QtableSize = " << ai.getQTableSize() << std::endl;
 			}
 		}
-		ai.exportModel("100.mdl");
+		// ai.exportModel("50000.mdl");
 	}
 	catch(const std::exception& e)
 	{

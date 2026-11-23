@@ -43,6 +43,11 @@ int		Agent::getGamePlayed(void) const
 	return this->_gamesPlayed;
 }
 
+size_t	Agent::getQTableSize(void) const
+{
+	return this->_QTable.size();
+}
+
 void	Agent::setTraining(bool training)
 {
 	this->_training = training;

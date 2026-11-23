@@ -40,6 +40,19 @@ void	Button::setPressed(bool press)
 	this->_pressed = press;
 }
 
+void	Button::setColors(int color, int hoverColor, int borderColor,
+						int borderHoverColor, int pressedColor, int pressedBorderColor,
+						int textCol, int textSecondCol)
+{
+	this->_text.setColors(textCol, textSecondCol);
+	this->_color = color;
+	this->_hoverColor = hoverColor;
+	this->_borderColor = borderColor;
+	this->_borderHoverColor = borderHoverColor;
+	this->_pressedColor = pressedColor;
+	this->_pressedBorderColor = pressedBorderColor;
+}
+
 bool	Button::isMouseOn(void) const
 {
 	return this->_hover;

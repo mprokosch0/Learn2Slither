@@ -58,6 +58,7 @@ class Text
 		enum class Colors {Primary, Secondary};
 		const std::string	&getText(void) const;
 		void				setText(std::string text);
+		void				setColors(int color, int hoverColor);
 		float				getZoom(void) const;
 		void				addChar(char c, size_t pos);
 		void				deleteChar(size_t pos);
@@ -73,7 +74,7 @@ class Text
 
 class Rectangle
 {
-	private:
+	protected:
 		box		_dimentions;
 		int		_color;
 		size_t	_borderWidth;
@@ -91,8 +92,29 @@ class Rectangle
 	public:
 		void		render(Image &img) const;
 		void		render(Image &img, int color, int borderColor) const;
+		void		setColors(int color, int borderColor);
 		const box	getDimentions(void) const;
 		int			getBorderWidth(void) const;
+};
+
+class CornerLessRect : public Rectangle
+{
+	private:
+		uint8_t	_whichCorner;
+		box		_cornerDims;
+	
+
+	public:
+		enum class Corners {TOP_LEFT = 1, TOP_RIGHT, BOTTOM_LEFT = 4, BOTTOM_RIGHT = 8};
+	
+	public:
+		CornerLessRect(void);
+		CornerLessRect(box dims, int color, size_t borderWidth, int borderColor,
+			uint8_t whichCorner, box cornerDims);
+	
+	public:
+		void	render(Image &img) const;
+
 };
 
 class Image
@@ -200,6 +222,9 @@ class Button
 		void		click(void);
 		bool		isPressed(void) const;
 		void		setPressed(bool press);
+		void		setColors(int color, int hoverColor, int borderColor,
+						int borderHoverColor, int pressedColor, int pressedBorderColor,
+						int textCol, int textSecondCol);
 		void		render(Image &img);
 		void		renderClip(Image &img, box &clip);
 		void		clearHover(void);
@@ -246,6 +271,8 @@ class TextBox
 		bool			isMouseOn(int x, int y) const;
 		unsigned int	getUInt(void) const;
 		void			setMode(Mode mode);
+		void			setColors(int textCol, int secTextCol, int rectCol, int rectBorderCol,
+							int inactiveColor, int inactiveColorBorder);
 		void			activate(void);
 		void			desactivate(void);
 		std::string		getText(void) const;
@@ -280,6 +307,9 @@ class Slider
 	public:
 		void	click(int x, T &value);
 		bool	isMouseOn(void) const;
+		void	setColors(int trackColor, int trackColorDesac, int color,
+					int hoverColor, int borderColor,
+					int borderHovercolor, int pressedColor, int pressedBorderColor);
 		void	clearHover(void);
 		void	updatePos(T const &value);
 		bool	hoverIfOnSlider(int x, int y);
@@ -372,9 +402,10 @@ class IScreen
 		IScreen(size_t width, size_t height):
 			_width(width), _height(height){};
 		virtual ~IScreen() = default;
-		virtual void onEnter() {};
-		virtual void onExit() {};
-		virtual void update() = 0;
+		virtual void onEnter(void) {};
+		virtual void onExit(void) {};
+		virtual void update(void) = 0;
+		virtual void updateTheme(void) = 0;
 		virtual void render(Image &img) = 0;
 		virtual void onKeyDown(int keycode) = 0;
 		virtual void onKeyUp(int keycode) = 0;
@@ -393,6 +424,7 @@ class TitleScreen : public IScreen
 
 	public:
 		void	update() override;
+		void	updateTheme(void) override;
 		void	render(Image &img) override;
 		void	onKeyDown(int keycode) override;
 		void	onKeyUp(int keycode) override;
@@ -472,6 +504,7 @@ class SelectScreen : public IScreen
 
 	public:
 		void	update() override;
+		void	updateTheme(void) override;
 		void	render(Image &img) override;
 		void	onKeyDown(int keycode) override;
 		void	onKeyUp(int keycode) override;
@@ -485,15 +518,20 @@ class GameScreen : public IScreen
 	private:
 		struct Stats
 		{
-			Rectangle	statsRect;
+			CornerLessRect										statsRect;
+			std::pair<Text, std::array<int, 2>>					title;
+			std::vector<std::pair<Text, std::array<int, 2>>>	names;
 		};
 		struct Options
 		{
-			Rectangle	optionsRect;
+			Rectangle											optionsRect;
+			std::pair<Text, std::array<int, 2>>					title;
+			std::vector<std::pair<Text, std::array<int, 2>>>	names;
 		};
 		struct Logs
 		{
-			Rectangle	logsRect;
+			Rectangle											logsRect;
+			std::pair<Text, std::array<int, 2>>					title;
 		};
 		
 
@@ -531,6 +569,7 @@ class GameScreen : public IScreen
 	
 	public:
 		void	update() override;
+		void	updateTheme(void) override;
 		void	render(Image &img) override;
 		void	onKeyDown(int keycode) override;
 		void	onKeyUp(int keycode) override;
@@ -570,6 +609,8 @@ class Engine
 		Image										_img;
 		std::unique_ptr<IScreen>					_screen;
 		std::unique_ptr<IScreen>					_nextScreen;
+		std::array<Button, 3>						_themesButtons;
+		Rectangle									_themeRect;
 		std::unordered_map<std::string, Texture>	_textures;
 		std::exception_ptr							_error;
 

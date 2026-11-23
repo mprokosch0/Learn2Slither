@@ -167,6 +167,7 @@ class Agent
 	public:
 		void	setState(int state);
 		int 	getState(void) const;
+		size_t	getQTableSize(void) const;
 		void	setTraining(bool training);
 		bool	isTraining(void) const;
 		void	incrementTotalGames(void);

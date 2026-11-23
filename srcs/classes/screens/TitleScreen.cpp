@@ -19,6 +19,9 @@ TitleScreen::TitleScreen(size_t width, size_t height, Engine &engine): IScreen(w
 			});
 }
 
+void	TitleScreen::updateTheme(void)
+{}
+
 void	TitleScreen::update(void)
 {}
 
@@ -66,7 +69,8 @@ void	TitleScreen::onMouseMove(int x, int y)
 
 void	TitleScreen::render(Image &img)
 {
-	img.colorImage(0x33aa33);
+	const Theme &t = THEMES[this->_theme % 3];
+	img.colorImage(t.windowBg);
 	for (Button &but : this->_buttons)
 		but.render(img);
 }

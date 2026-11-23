@@ -1,10 +1,11 @@
 #include "learn2Slither.hpp"
 
 Engine::Engine(size_t winWidth, size_t winHeight): _width(winWidth),
-	_height(winHeight), _theme(2), _nextScreen(nullptr), _error(nullptr)
+	_height(winHeight), _theme(1), _nextScreen(nullptr), _error(nullptr)
 {
 	try
 	{
+		const Theme &t = THEMES[_theme % 3];
 		this->_mlx = mlx_init();
 		if (!this->_mlx)
 			throw std::runtime_error("Mlx_init function failed");
@@ -17,6 +18,49 @@ Engine::Engine(size_t winWidth, size_t winHeight): _width(winWidth),
 		}
 		this->_img.init(this->_mlx, winWidth, winHeight);
 		this->_screen = std::make_unique<TitleScreen>(this->_width, this->_height, *this);
+		int w = this->_width;
+		this->_themeRect = Rectangle((box){w - 100, 5, 95, 35},
+							t.panel, 2, t.borderBox);
+		this->_themesButtons[0] = Button((box){w - 95, 10, 25, 25},
+				t.inner, t.hover, t.borderBtn, t.borderHover, t.inner, t.hover,
+				Text("", 1.f, t.textMain, t.textSecondary), true,
+				[this]()
+				{
+					this->_theme = 0;
+					const Theme &t = THEMES[_theme % 3];
+					this->_screen->updateTheme();
+					this->_themeRect.setColors(t.panel, t.borderBox);
+					for (auto &b : this->_themesButtons)
+						b.setColors(t.inner, t.hover, t.borderBtn,
+							t.borderHover, t.inner, t.hover, t.textMain, t.textSecondary);
+				});
+		this->_themesButtons[1] = Button((box){w - 65, 10, 25, 25},
+				t.inner, t.hover, t.borderBtn, t.borderHover, t.inner, t.hover,
+				Text("", 1.f, t.textMain, t.textSecondary), true,
+				[this]()
+				{
+					this->_theme = 1;
+					const Theme &t = THEMES[_theme % 3];
+					this->_screen->updateTheme();
+					this->_themeRect.setColors(t.panel, t.borderBox);
+					for (auto &b : this->_themesButtons)
+						b.setColors(t.inner, t.hover, t.borderBtn,
+							t.borderHover, t.inner, t.hover, t.textMain, t.textSecondary);
+					
+				});
+		this->_themesButtons[2] = Button((box){w - 35, 10, 25, 25},
+				t.inner, t.hover, t.borderBtn, t.borderHover, t.inner, t.hover,
+				Text("", 1.f, t.textMain, t.textSecondary), true,
+				[this]()
+				{
+					this->_theme = 2;
+					const Theme &t = THEMES[_theme % 3];
+					this->_screen->updateTheme();
+					this->_themeRect.setColors(t.panel, t.borderBox);
+					for (auto &b : this->_themesButtons)
+						b.setColors(t.inner, t.hover, t.borderBtn,
+							t.borderHover, t.inner, t.hover, t.textMain, t.textSecondary);
+				});
 	}
 	catch(const std::exception& e)
 	{
@@ -144,6 +188,14 @@ int		Engine::onKeyUpTrampoline(int keycode, void *self)
 void	Engine::mouseDown(int button, int x, int y)
 {
 	this->_screen->onMouseDown(button, x, y);
+	for (auto &b : this->_themesButtons)
+	{
+		if (b.isMouseOn())
+		{
+			b.click();
+			b.setPressed(false);
+		}
+	}
 }
 
 void	Engine::mouseUp(int button, int x, int y)
@@ -153,6 +205,11 @@ void	Engine::mouseUp(int button, int x, int y)
 
 void	Engine::mouseMove(int x, int y)
 {
+	for (auto &b : this->_themesButtons)
+	{
+		b.clearHover();
+		b.hoverIfOnButton(x, y);
+	}
 	this->_screen->onMouseMove(x, y);
 }
 
@@ -170,6 +227,17 @@ void	Engine::loop()
 {
 	this->_screen->update();
 	this->_screen->render(this->_img);
+	this->_themeRect.render(this->_img);
+	for (auto &b : this->_themesButtons)
+		b.render(this->_img);
+	auto &text = this->_textures["Snake.xpm"];
+	int w = this->_width;
+	text.applyBloc(this->_img, std::make_pair(0, 0), w - 93, 12, 21.f / 16.f);
+	text.applyBloc(this->_img, std::make_pair(13, 1), w - 93, 12, 21.f / 16.f);
+	text.applyBloc(this->_img, std::make_pair(0, 7), w - 63, 12, 21.f / 16.f);
+	text.applyBloc(this->_img, std::make_pair(13, 8), w - 65, 12, 21.f / 16.f);
+	text.applyBloc(this->_img, std::make_pair(0, 14), w - 33, 12, 21.f / 16.f);
+	text.applyBloc(this->_img, std::make_pair(13, 15), w - 33, 12, 21.f / 16.f);
 	mlx_put_image_to_window(this->_mlx, this->_mlx_win, this->_img.getImg(), 0, 0);
 	if (this->_nextScreen)
 		this->_screen = std::move(this->_nextScreen);

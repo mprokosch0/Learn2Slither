@@ -43,6 +43,12 @@ const std::string	&Text::getText(void) const
 	return this->_text;
 }
 
+void	Text::setColors(int color, int hoverColor)
+{
+	this->_color = color;
+	this->_hoverColor = hoverColor;
+}
+
 void	Text::addChar(char c, size_t pos)
 {
 	this->_text.insert(this->_text.begin() + pos, 1, c);
