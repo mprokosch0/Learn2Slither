@@ -19,6 +19,7 @@ extern "C"
 # include <filesystem>
 # include <chrono>
 # include <format>
+# include <deque>
 
 class Image;
 class Engine;
@@ -320,6 +321,38 @@ class Slider
 
 # include "Slider.tpp"
 
+class Logs
+{
+	public:
+		enum class Colors {INFO, SUCCESS, WARN, ERROR};
+
+	private:
+		static size_t						_maxLogNb;
+		box									_dims;
+		std::deque<std::pair<Text, Colors>>	_lines;
+		int									_yScroll;
+		int									_color;
+		int									_borderColor;
+		int									_infoColor;
+		int									_successColor;
+		int									_warnColor;
+		int									_errorColor;
+	
+	
+	public:
+		Logs(void);
+		Logs(box dims, int color, int borderColor,
+			int infoColor, int sucessColor, int warnColor, int errorColor);
+		~Logs();
+	
+	public:
+		bool	isMouseOn(int x, int y);
+		void	setColors(int color, int borderColor,
+			int infoColor, int successColor, int warnColor, int errorColor);
+		void	addLog(std::string str, Colors color);
+		void	render(Image &img) const;
+};
+
 struct Hooks
 {
 	bool	mouseLeft = false;
@@ -361,6 +394,8 @@ struct Theme
 	int accent, accentHover;
 	int title, textSecondary, textMain, textBright;
 	int boardA, boardB;
+	int terminalBg, logTimestamp;
+    int logInfo, logSuccess, logWarn, logError;
 };
 
 inline Theme THEMES[3] =
@@ -370,19 +405,25 @@ inline Theme THEMES[3] =
 	 0x8B480F, 0x976600, 0x976600, 0xCA8900,
 	 0xFFAD00, 0xFFE300,
 	 0xFFAD00, 0xE4BF76, 0xF7D798, 0xFFFFFF,
-	 0xA66B35, 0x805024},
+	 0xA66B35, 0x805024,
+	 0x2A1300, 0x976600,
+	 0xE4BF76, 0xB5E04A, 0xFFE300, 0xFF5A4A},
 	// Plaine
 	{0x003B09, 0x003B09, 0x00500C, 0x00500C, 0x046807, 0x087D19,
 	 0x007812, 0x009E18, 0x54B657, 0x06A618,
 	 0x24D92A, 0x7CFF72,
 	 0xA5F5AD, 0xC1F5C5, 0xE5FFE8, 0xFFFFFF,
-	 0x3D9145, 0x286D32},
+	 0x3D9145, 0x286D32,
+	 0x002206, 0x54B657,
+	 0xC1F5C5, 0x24D92A, 0xFFD23F, 0xFF6B5A},
 	// Eau
 	{0x0B1E45, 0x0B1E45, 0x0F2A5E, 0x0F2A5E, 0x003E93, 0x1D5FB9,
 	 0x1D5FB9, 0x6190D1, 0x6190D1, 0x589DFB,
 	 0x8FB7F0, 0xFFFFFF,
 	 0x8FB7F0, 0x7CA6E0, 0xFFFFFF, 0xFFFFFF,
-	 0x36568A, 0x243F70}
+	 0x36568A, 0x243F70,
+	 0x061230, 0x6190D1,
+	 0xBFD4F5, 0x5FE0B0, 0xFFD23F, 0xFF6B6B}
 };
 
 class IScreen
@@ -521,17 +562,28 @@ class GameScreen : public IScreen
 			CornerLessRect										statsRect;
 			std::pair<Text, std::array<int, 2>>					title;
 			std::vector<std::pair<Text, std::array<int, 2>>>	names;
+			std::vector<std::pair<Text, std::array<int, 2>>>	values;
+			size_t												nbReached10;
+			size_t												snakeMaxSize;
+			double												avgSnakeSize;
+			size_t												nbTicks;
+			size_t												maxTickDuration;
+			double												avgTickDuration;
 		};
 		struct Options
 		{
 			Rectangle											optionsRect;
 			std::pair<Text, std::array<int, 2>>					title;
 			std::vector<std::pair<Text, std::array<int, 2>>>	names;
+			std::vector<std::pair<Text, std::array<int, 2>>>	values;
+			Slider<int>											tickSlider;
+			int													tickSpeed;
 		};
-		struct Logs
+		struct Logsbox
 		{
 			Rectangle											logsRect;
 			std::pair<Text, std::array<int, 2>>					title;
+			Logs												logs;
 		};
 		
 
@@ -539,6 +591,7 @@ class GameScreen : public IScreen
 		Board									_board;
 		Agent									_agent;
 		unsigned int							_nbGames;
+		unsigned int							_gameCount;
 		bool									_visualDisplay;
 		float									_boardZoom;
 		std::string								_exportName;
@@ -549,14 +602,15 @@ class GameScreen : public IScreen
 		Rectangle								_boardRect;
 		Stats									_stats;
 		Options									_options;
-		Logs									_logs;
+		Logsbox									_logs;
 	
 	private:
 		void	initStats(const Theme &t);
 		void	initOptions(const Theme &t);
 		void	initLogs(const Theme &t);
+		void	updateHover(int x, int y);
 		void	renderStats(Image &img) const;
-		void	renderOptions(Image &img) const;
+		void	renderOptions(Image &img);
 		void	renderLogs(Image &img) const;
 		void	renderSnake(Image &img) const;
 		void	renderBoard(Image &img) const;

@@ -77,12 +77,16 @@ static int	getPixel(t_img &img, int x, int y)
 
 void	Image::importFont(void)
 {
-	const std::string set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+,;:!?.*&#%");
+	const std::string set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+,;:!?.*&#%/");
 	std::string rep = "font/", ext = ".xpm";
 	int width = 0, height = 0; 
 	for (char c : set)
 	{
-		std::string filename = rep + c + ext;
+		std::string filename;
+		if (c == '/')
+			filename = rep + "slash" + ext;
+		else
+			filename = rep + c + ext;
 		t_img img;
 		img.img = mlx_xpm_file_to_image(this->_mlx, filename.data(), &width, &height);
 		if (!img.img)

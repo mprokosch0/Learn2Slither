@@ -2,7 +2,7 @@ NAME = Learn2Slither
 
 CXX = c++
 
-CXXFLAGS = -Wall -Wextra -Werror -std=c++20 -g -Iincludes -Iminilibx-linux -MMD -MP
+CXXFLAGS = -Wall -Wextra -Werror -std=c++20 -O3 -Iincludes -Iminilibx-linux -MMD -MP
 
 MLX_PATH = ./minilibx-linux
 MLX = $(MLX_PATH)/libmlx.a
@@ -17,6 +17,7 @@ SRCS =	srcs/main.cpp \
 		srcs/classes/Rectangle.cpp \
 		srcs/classes/Button.cpp \
 		srcs/classes/Texture.cpp \
+		srcs/classes/Logs.cpp \
 		srcs/classes/screens/IScreen.cpp \
 		srcs/classes/screens/TitleScreen.cpp \
 		srcs/classes/screens/SelectScreen/SelectScreen.cpp \

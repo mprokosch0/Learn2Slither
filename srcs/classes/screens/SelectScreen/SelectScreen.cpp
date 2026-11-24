@@ -484,7 +484,8 @@ void	SelectScreen::onMouseMove(int x, int y)
 {
 	if (!this->_hooks.mouseLeft)
 		hoverUpdate(x, y);
-	else
+	
+	if (this->_hooks.mouseLeft)
 	{
 		for (size_t i = 0; i < this->_settings.hyperParametersSlider.size(); i++)
 		{
