@@ -588,6 +588,8 @@ class GameScreen : public IScreen
 			std::vector<std::pair<Text, std::array<int, 2>>>	values;
 			Slider<int>											tickSlider;
 			int													tickSpeed;
+			Button												pauseBtn;
+			bool												pause;
 			Button												killSnake;
 		};
 		struct Logsbox

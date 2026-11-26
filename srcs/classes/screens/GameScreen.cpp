@@ -232,7 +232,26 @@ void	GameScreen::initOptions(const Theme &t)
 	o.tickSlider = Slider<int>((box){leftX + 10, o.names[0].second[1] + 25, w - 20, 3},
 		t.borderBox, t.disabled, t.accent, t.textBright, t.borderBtn, t.borderHover, t.muted, t.muted, 1, 100);
 	
-	o.killSnake = Button((box){leftX + w / 2 - 75, o.names[0].second[1] + 45, 150, 40},
+	o.pauseBtn = Button((box){leftX + w / 3 - 75, o.names[0].second[1] + 45, 150, 40},
+		t.inner, t.hover, t.borderBtn, t.borderHover, t.hover, t.borderHover,
+		Text("Pause", 1.f, t.textMain, t.textMain), true,
+		[this]()
+		{
+			if (!this->_options.pause)
+			{
+				this->_logs.logs.addLog("Game paused", Logs::Colors::SUCCESS);
+				this->_options.pauseBtn.setText("Unpause");
+			}
+			else
+			{
+				this->_logs.logs.addLog("Game unpaused", Logs::Colors::SUCCESS);
+				this->_options.pauseBtn.setText("Pause");
+			}
+			this->_options.pause = !this->_options.pause;
+		}
+		);
+
+	o.killSnake = Button((box){leftX + w * 2 / 3 - 75, o.names[0].second[1] + 45, 150, 40},
 		t.inner, t.logError, t.borderBtn, t.borderHover, t.hover, t.borderHover,
 		Text("Kill snake", 1.f, t.textMain, t.textBright), true,
 		[this]()
@@ -288,6 +307,7 @@ void	GameScreen::updateTheme(void)
 	for (auto &txt : this->_options.values)
 		txt.first.setColors(t.textSecondary, t.textSecondary);
 	this->_options.tickSlider.setColors(t.borderBox, t.disabled, t.accent, t.textBright, t.borderBtn, t.borderHover, t.muted, t.muted);
+	this->_options.pauseBtn.setColors(t.inner, t.hover, t.borderBtn, t.borderHover, t.hover, t.borderHover, t.textMain, t.textBright);
 	this->_options.killSnake.setColors(t.inner, t.logError, t.borderBtn, t.borderHover, t.hover, t.borderHover, t.textMain, t.textBright);
 
 	this->_logs.logsRect.setColors(t.panel, t.borderBox);
@@ -299,6 +319,8 @@ void	GameScreen::updateTheme(void)
 
 void	GameScreen::update(void)
 {
+	if (this->_options.pause)
+		return ;
 	if (std::chrono::duration<double>(std::chrono::steady_clock::now() - this->_step).count() < this->_stepTime)
 		return ;
 	this->_step = std::chrono::steady_clock::now();
@@ -320,7 +342,8 @@ void	GameScreen::update(void)
 	this->_displayAgent.updateQTable(t);
 	if (this->_board.hasLost())
 	{
-		this->_logs.logs.addLog("Snake has lost", Logs::Colors::ERROR);
+		this->_logs.logs.addLog("Snake has lost with a size of "
+			+ std::to_string(this->_board.getSnakeSize()), Logs::Colors::ERROR);
 
 		this->_board.reset();
 		if (!this->_threadDone.load())
@@ -349,6 +372,9 @@ void	GameScreen::updateHover(int x, int y)
 	this->_options.tickSlider.clearHover();
 	this->_options.tickSlider.hoverIfOnSlider(x, y);
 
+	this->_options.pauseBtn.clearHover();
+	this->_options.pauseBtn.hoverIfOnButton(x, y);
+
 	this->_options.killSnake.clearHover();
 	this->_options.killSnake.hoverIfOnButton(x, y);
 
@@ -364,6 +390,11 @@ void	GameScreen::onMouseDown(int button, int x, int y)
 		this->_options.tickSlider.click(x, this->_options.tickSpeed);
 		this->_stepTime = 1.0 / this->_options.tickSpeed;
 		this->_options.values[0].first.setText(std::to_string(this->_options.tickSpeed) + "/sec");
+	}
+	if (this->_options.pauseBtn.isMouseOn())
+	{
+		this->_options.pauseBtn.click();
+		this->_options.pauseBtn.setPressed(false);
 	}
 	if (this->_options.killSnake.isMouseOn())
 	{
@@ -520,6 +551,7 @@ void	GameScreen::renderOptions(Image &img)
 	for (auto &txt : o.values)
 		txt.first.render(txt.second[0], txt.second[1], img, Text::HAlign::Right, Text::VAlign::Center);
 	o.tickSlider.render(img);
+	o.pauseBtn.render(img);
 	o.killSnake.render(img);
 }
 
