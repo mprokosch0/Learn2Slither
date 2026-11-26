@@ -30,7 +30,7 @@ class Interpreter
 		Interpreter	&operator=(Interpreter const &rhs);
 
 	public:
-		int		getState(void) const;
+		int64_t	getState(void) const;
 		double	getReward(void) const;
 		Actions	getAction(void) const;
 		bool	isTerminal(void) const;
@@ -39,14 +39,14 @@ class Interpreter
 class Agent
 {
 	private:
-		std::string										_name;
-		std::unordered_map<int, std::array<double, 3>>	_QTable;
-		int												_state;
-		float											_learningRate;
-		float											_discountFactor;
-		float											_epsilon;
-		u_int32_t										_gamesPlayed;
-		bool											_training;
+		std::string											_name;
+		std::unordered_map<int64_t, std::array<double, 3>>	_QTable;
+		int													_state;
+		float												_learningRate;
+		float												_discountFactor;
+		float												_epsilon;
+		u_int32_t											_gamesPlayed;
+		bool												_training;
 	
 	private:
 		void	parseModel(std::ifstream &file);

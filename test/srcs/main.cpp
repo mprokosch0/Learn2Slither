@@ -9,17 +9,17 @@ int main(void)
 		int		nbGames = 0;
 		long sizeDied = 0, sizeStarved = 0;
 		int  nbDied = 0, nbStarved = 0, nbReach10 = 0;
-		// ai.importModel("50000.mdl");
+		ai.importModel("t3.mdl");
 		ai.setState(Interpreter(board.getSnakeViews(),
 				0, Actions::FORWARD, 0, 0).getState());
-		// ai.setTraining(false);
+		ai.setTraining(false);
 		int	nbMoves = 0, snakeSize = 0;
 		int max = 0, maxMove = 0;
 		int min = 0;
 		while (nbGames < 500000)
 		{
 			size_t moves = 0;
-			while (moves < 2500)
+			while (moves < 3000)
 			{
 				Actions act = ai.chooseAction();
 				double reward = board.snakeMove(act);
@@ -48,7 +48,7 @@ int main(void)
 			snakeSize += board.getSnakeSize();
 			nbMoves += moves;
 			nbGames++;
-			if (moves < 2500)
+			if (moves < 3000)
 				maxMove = std::max(maxMove, (int)moves);
 			
 			ai.decayExploration();
@@ -76,7 +76,7 @@ int main(void)
 				std::cout << "QtableSize = " << ai.getQTableSize() << std::endl;
 			}
 		}
-		// ai.exportModel("50000.mdl");
+		// ai.exportModel("t3.mdl");
 	}
 	catch(const std::exception& e)
 	{

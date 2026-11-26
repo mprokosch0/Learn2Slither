@@ -5,12 +5,11 @@
 #define PIXEL_PAD_BOARD 8
 
 GameScreen::GameScreen(size_t width, size_t height, Engine &engine,
-	Board board, Agent agent, unsigned int nbGames,
-	bool visualDisplay, std::string exportName):
-	IScreen(width, height), _board(board), _agent(agent), _nbGames(nbGames), _gameCount(0),
-	_visualDisplay(visualDisplay), _boardZoom(0.f), _exportName(exportName),
+	Board board, Agent agent, unsigned int nbGames, std::string exportName):
+	IScreen(width, height), _board(board), _agent(agent), _displayAgent(agent), _quitThread(false),
+	_threadDone(false), _nbGames(nbGames), _gameCount(0), _boardZoom(0.f), _exportName(exportName),
 	_snakeText(engine.getTextures().at("Snake.xpm")), _theme(engine.getTheme()),
-	_stepTime(1.0), _step(), _boardRect(), _stats(), _options(), _logs()
+	_stepTime(1.0), _step(), _boardRect(), _stats(), _options(), _logs(), _saveQuit()
 {
 	int cellSize = std::min(MAX_PIXEL_WIDTH / this->_board.getWidth(), MAX_PIXEL_HEIGHT / this->_board.getHeight());
 	this->_boardZoom = static_cast<float>(cellSize) / this->_snakeText.getBlockSize().first;
@@ -25,6 +24,121 @@ GameScreen::GameScreen(size_t width, size_t height, Engine &engine,
 	initStats(t);
 	initOptions(t);
 	initLogs(t);
+
+	std::string txt = (this->_exportName.size()) ? "Save and quit" : "Quit";
+	box bRect = this->_boardRect.getDimentions();
+	int padX = bRect.x + bRect.w + (((int)this->_width - (bRect.x + bRect.w)) / 2) - 150;
+	this->_saveQuit = Button((box){padX, (int)this->_height - 55, 300, 40},
+		t.accent, t.accentHover, t.accent, t.accent, t.accent, t.accent,
+		Text(txt, 1.f, t.windowBg, t.windowBg), true,
+		[this, &engine]()
+		{
+			this->_quitThread.store(true);
+			while (!this->_threadDone.load())
+				;
+			
+			if (this->_exportName.size())
+				this->_agent.exportModel("./models/" + this->_exportName);
+			engine.prepareNextScreen(std::make_unique<SelectScreen>(this->_width, this->_height, engine));
+		}
+		);
+	
+	std::thread thread(&GameScreen::trainingThread, this, this->_board);
+	if (thread.joinable())
+		thread.detach();
+}
+
+void	GameScreen::trainingThread(Board b)
+{
+	this->_mtx.lock();
+	bool training = this->_agent.isTraining();
+	this->_mtx.unlock();
+	size_t maxMove = b.getWidth() * b.getHeight() * 20;
+	while (this->_gameCount < this->_nbGames)
+	{
+		size_t nbTicks = 0;
+		if (training)
+		{
+			while (1)
+			{
+				nbTicks++;
+				this->_mtx.lock();
+				Actions act = this->_agent.chooseAction();
+				this->_mtx.unlock();
+				double reward = b.snakeMove(act);
+				Interpreter t(b.getSnakeViews(), reward, act,
+										b.hasWon(), b.hasLost());
+				this->_mtx.lock();
+				this->_agent.updateQTable(t);
+				this->_mtx.unlock();
+				if (b.hasLost())
+					break ;
+
+				this->_mtx.lock();
+				if (this->_quitThread)
+				{
+					this->_mtx.unlock();
+					this->_threadDone.store(true);
+					return ;
+				}
+				this->_mtx.unlock();
+			}
+		}
+		else
+		{
+			while (nbTicks < maxMove)
+			{
+				nbTicks++;
+				this->_mtx.lock();
+				Actions act = this->_agent.chooseAction();
+				this->_mtx.unlock();
+				double reward = b.snakeMove(act);
+				Interpreter t(b.getSnakeViews(), reward, act,
+										b.hasWon(), b.hasLost());
+				this->_mtx.lock();
+				this->_agent.updateQTable(t);
+				this->_mtx.unlock();
+				if (b.hasLost())
+					break ;
+
+				this->_mtx.lock();
+				if (this->_quitThread)
+				{
+					this->_mtx.unlock();
+					this->_threadDone.store(true);
+					return ;
+				}
+				this->_mtx.unlock();
+			}
+		}
+		this->_mtx.lock();
+		this->_gameCount++;
+		size_t sSize = b.getSnakeSize();
+		if (sSize >= 10)
+			this->_stats.nbReached10++;
+		this->_stats.avgSnakeSize += sSize;
+		this->_stats.snakeMaxSize = std::max(this->_stats.snakeMaxSize, sSize);
+		this->_stats.avgTickDuration += nbTicks;
+		if ((!training && nbTicks < maxMove) || training)
+			this->_stats.maxTickDuration = std::max(this->_stats.maxTickDuration, nbTicks);
+
+		this->_agent.decayExploration();
+		this->_agent.incrementTotalGames();
+		b.reset();
+		this->_agent.setState(Interpreter(b.getSnakeViews(),
+				0, Actions::FORWARD, 0, 0).getState());
+		
+		this->_stats.values[0].first.setText(std::to_string(this->_gameCount) + "/" + std::to_string(this->_nbGames));
+		this->_stats.values[1].first.setText(std::to_string(this->_stats.nbReached10));
+		this->_stats.values[2].first.setText(std::to_string(this->_stats.snakeMaxSize));
+		this->_stats.values[3].first.setText(std::format("{:.2f}", this->_stats.avgSnakeSize / (float)this->_gameCount));
+		this->_stats.values[4].first.setText(std::to_string(this->_stats.maxTickDuration));
+		this->_stats.values[5].first.setText(std::format("{:.2f}", this->_stats.avgTickDuration / (float)this->_gameCount));
+		this->_mtx.unlock();
+		if (this->_quitThread.load())
+			break ;
+	}
+	this->_threadDone.store(true);
 }
 
 void	GameScreen::initStats(const Theme &t)
@@ -68,7 +182,7 @@ void	GameScreen::initStats(const Theme &t)
 	));
 
 	s.values.emplace_back(std::make_pair(
-		Text(std::to_string(this->_gameCount), 1.f, t.textSecondary, t.textSecondary),
+		Text(std::to_string(this->_gameCount) + "/" + std::to_string(this->_nbGames), 1.f, t.textSecondary, t.textSecondary),
 		std::array<int, 2>({rightX - 5, s.title.second[1] + 45})
 	));
 	s.values.emplace_back(std::make_pair(
@@ -100,7 +214,7 @@ void	GameScreen::initOptions(const Theme &t)
 	this->_options.tickSpeed = 1;
 	int leftX = bRect.x + bRect.w + PIXEL_PAD_BOARD;
 	int w = (int)this->_width - PIXEL_PAD_BOARD - leftX;
-	o.optionsRect = Rectangle((box){leftX, 218, w, 100}, t.panel, 2, t.borderBox);
+	o.optionsRect = Rectangle((box){leftX, 218, w, 150}, t.panel, 2, t.borderBox);
 	o.title = std::make_pair(
 		Text("Options", 1.2f, t.title, t.title),
 		std::array<int, 2>({leftX + 5, 228}));
@@ -112,11 +226,30 @@ void	GameScreen::initOptions(const Theme &t)
 
 	o.values.emplace_back(std::make_pair(
 		Text(std::to_string(o.tickSpeed) + "/sec", 1.f, t.textSecondary, t.textSecondary),
-		std::array<int, 2>({leftX + w - 10, o.names.back().second[1]})
+		std::array<int, 2>({leftX + w - 10, o.names[0].second[1]})
 	));
 
-	o.tickSlider = Slider<int>((box){leftX + 10, o.names.back().second[1] + 25, w - 20, 3},
+	o.tickSlider = Slider<int>((box){leftX + 10, o.names[0].second[1] + 25, w - 20, 3},
 		t.borderBox, t.disabled, t.accent, t.textBright, t.borderBtn, t.borderHover, t.muted, t.muted, 1, 100);
+	
+	o.killSnake = Button((box){leftX + w / 2 - 75, o.names[0].second[1] + 45, 150, 40},
+		t.inner, t.logError, t.borderBtn, t.borderHover, t.hover, t.borderHover,
+		Text("Kill snake", 1.f, t.textMain, t.textBright), true,
+		[this]()
+		{
+			this->_logs.logs.addLog("Snake has been killed manually", Logs::Colors::ERROR);
+
+			this->_board.reset();
+			if (!this->_threadDone.load())
+			{
+				this->_mtx.lock();
+				this->_displayAgent = this->_agent;
+				this->_mtx.unlock();
+			}
+			this->_displayAgent.setState(Interpreter(this->_board.getSnakeViews(),
+					0, Actions::FORWARD, 0, 0).getState());
+		}
+	);
 }
 
 void	GameScreen::initLogs(const Theme &t)
@@ -124,7 +257,7 @@ void	GameScreen::initLogs(const Theme &t)
 	Logsbox &l = this->_logs;
 	const box &bRect = this->_boardRect.getDimentions();
 	int leftX = bRect.x + bRect.w + PIXEL_PAD_BOARD;
-	box lRect = {leftX, 328, (int)this->_width - PIXEL_PAD_BOARD - leftX, 464};
+	box lRect = {leftX, 378, (int)this->_width - PIXEL_PAD_BOARD - leftX, 352};
 	l.logsRect = Rectangle(lRect, t.panel, 2, t.borderBox);
 	l.title = std::make_pair(
 		Text("Logs", 1.2f, t.title, t.title),
@@ -143,8 +276,10 @@ void	GameScreen::updateTheme(void)
 	this->_stats.title.first.setColors(t.title, t.title);
 	for (auto &txt : this->_stats.names)
 		txt.first.setColors(t.textMain, t.textMain);
+	this->_mtx.lock();
 	for (auto &txt : this->_stats.values)
 		txt.first.setColors(t.textSecondary, t.textSecondary);
+	this->_mtx.unlock();
 
 	this->_options.optionsRect.setColors(t.panel, t.borderBox);
 	this->_options.title.first.setColors(t.title, t.title);
@@ -153,61 +288,49 @@ void	GameScreen::updateTheme(void)
 	for (auto &txt : this->_options.values)
 		txt.first.setColors(t.textSecondary, t.textSecondary);
 	this->_options.tickSlider.setColors(t.borderBox, t.disabled, t.accent, t.textBright, t.borderBtn, t.borderHover, t.muted, t.muted);
+	this->_options.killSnake.setColors(t.inner, t.logError, t.borderBtn, t.borderHover, t.hover, t.borderHover, t.textMain, t.textBright);
 
 	this->_logs.logsRect.setColors(t.panel, t.borderBox);
 	this->_logs.title.first.setColors(t.title, t.title);
 	this->_logs.logs.setColors(t.terminalBg, t.borderBox, t.logInfo, t.logSuccess, t.logWarn, t.logError);
+
+	this->_saveQuit.setColors(t.accent, t.accentHover, t.accent, t.accent, t.accent, t.accent, t.windowBg, t.windowBg);
 }
 
 void	GameScreen::update(void)
 {
 	if (std::chrono::duration<double>(std::chrono::steady_clock::now() - this->_step).count() < this->_stepTime)
 		return ;
-	if (this->_gameCount < this->_nbGames)
-	{
-		this->_stats.nbTicks++;
-		this->_step = std::chrono::steady_clock::now();
-		Actions act = this->_agent.chooseAction();
-		if (act == Actions::FORWARD)
-			this->_logs.logs.addLog("Snake move forward", Logs::Colors::INFO);
-		else if (act == Actions::LEFT)
-			this->_logs.logs.addLog("Snake move left", Logs::Colors::INFO);
-		else if (act == Actions::RIGHT)
-			this->_logs.logs.addLog("Snake move right", Logs::Colors::INFO);
-		double reward = this->_board.snakeMove(act);
-		if (reward > 0)
-			this->_logs.logs.addLog("Snake has eaten a green apple", Logs::Colors::SUCCESS);
-		else if (reward == -10)
-			this->_logs.logs.addLog("Snake has eaten a red apple", Logs::Colors::WARN);
-		Interpreter t(this->_board.getSnakeViews(), reward, act,
-								this->_board.hasWon(), this->_board.hasLost());
-		this->_agent.updateQTable(t);
-		if (this->_board.hasLost())
-		{
-			this->_logs.logs.addLog("Snake has lost", Logs::Colors::ERROR);
-			this->_gameCount++;
-			size_t sSize = this->_board.getSnakeSize();
-			if (sSize >= 10)
-				this->_stats.nbReached10++;
-			this->_stats.avgSnakeSize += sSize;
-			this->_stats.snakeMaxSize = std::max(this->_stats.snakeMaxSize, sSize);
-			this->_stats.avgTickDuration += this->_stats.nbTicks;
-			this->_stats.maxTickDuration = std::max(this->_stats.maxTickDuration, this->_stats.nbTicks);
+	this->_step = std::chrono::steady_clock::now();
 
-			this->_stats.nbTicks = 0;
-			this->_agent.decayExploration();
-			this->_agent.incrementTotalGames();
-			this->_board.reset();
-			this->_agent.setState(Interpreter(this->_board.getSnakeViews(),
-					0, Actions::FORWARD, 0, 0).getState());
-			
-			this->_stats.values[0].first.setText(std::to_string(this->_gameCount));
-			this->_stats.values[1].first.setText(std::to_string(this->_stats.nbReached10));
-			this->_stats.values[2].first.setText(std::to_string(this->_stats.snakeMaxSize));
-			this->_stats.values[3].first.setText(std::format("{:.2f}", this->_stats.avgSnakeSize / (float)this->_gameCount));
-			this->_stats.values[4].first.setText(std::to_string(this->_stats.maxTickDuration));
-			this->_stats.values[5].first.setText(std::format("{:.2f}", this->_stats.avgTickDuration / (float)this->_gameCount));
+	Actions act = this->_displayAgent.chooseAction();
+	if (act == Actions::FORWARD)
+		this->_logs.logs.addLog("Snake move forward", Logs::Colors::INFO);
+	else if (act == Actions::LEFT)
+		this->_logs.logs.addLog("Snake move left", Logs::Colors::INFO);
+	else if (act == Actions::RIGHT)
+		this->_logs.logs.addLog("Snake move right", Logs::Colors::INFO);
+	double reward = this->_board.snakeMove(act);
+	if (reward > 0)
+		this->_logs.logs.addLog("Snake has eaten a green apple", Logs::Colors::SUCCESS);
+	else if (reward == -10)
+		this->_logs.logs.addLog("Snake has eaten a red apple", Logs::Colors::WARN);
+	Interpreter t(this->_board.getSnakeViews(), reward, act,
+							this->_board.hasWon(), this->_board.hasLost());
+	this->_displayAgent.updateQTable(t);
+	if (this->_board.hasLost())
+	{
+		this->_logs.logs.addLog("Snake has lost", Logs::Colors::ERROR);
+
+		this->_board.reset();
+		if (!this->_threadDone.load())
+		{
+			this->_mtx.lock();
+			this->_displayAgent = this->_agent;
+			this->_mtx.unlock();
 		}
+		this->_displayAgent.setState(Interpreter(this->_board.getSnakeViews(),
+				0, Actions::FORWARD, 0, 0).getState());
 	}
 }
 
@@ -225,6 +348,12 @@ void	GameScreen::updateHover(int x, int y)
 {
 	this->_options.tickSlider.clearHover();
 	this->_options.tickSlider.hoverIfOnSlider(x, y);
+
+	this->_options.killSnake.clearHover();
+	this->_options.killSnake.hoverIfOnButton(x, y);
+
+	this->_saveQuit.clearHover();
+	this->_saveQuit.hoverIfOnButton(x, y);
 }
 
 void	GameScreen::onMouseDown(int button, int x, int y)
@@ -236,6 +365,13 @@ void	GameScreen::onMouseDown(int button, int x, int y)
 		this->_stepTime = 1.0 / this->_options.tickSpeed;
 		this->_options.values[0].first.setText(std::to_string(this->_options.tickSpeed) + "/sec");
 	}
+	if (this->_options.killSnake.isMouseOn())
+	{
+		this->_options.killSnake.click();
+		this->_options.killSnake.setPressed(false);
+	}
+	if (this->_saveQuit.isMouseOn())
+		this->_saveQuit.click();
 	updateMouseHooks(button, HOOK_DOWN);
 }
 
@@ -361,15 +497,17 @@ void	GameScreen::renderBoard(Image &img) const
 	}
 }
 
-void	GameScreen::renderStats(Image &img) const
+void	GameScreen::renderStats(Image &img)
 {
 	const Stats &s = this->_stats;
 	s.statsRect.render(img);
 	s.title.first.render(s.title.second[0], s.title.second[1], img, Text::HAlign::Left, Text::VAlign::Top);
 	for (auto &txt : s.names)
 		txt.first.render(txt.second[0], txt.second[1], img, Text::HAlign::Left, Text::VAlign::Center);
+	this->_mtx.lock();
 	for (auto &txt : s.values)
 		txt.first.render(txt.second[0], txt.second[1], img, Text::HAlign::Right, Text::VAlign::Center);
+	this->_mtx.unlock();
 }
 
 void	GameScreen::renderOptions(Image &img)
@@ -382,6 +520,7 @@ void	GameScreen::renderOptions(Image &img)
 	for (auto &txt : o.values)
 		txt.first.render(txt.second[0], txt.second[1], img, Text::HAlign::Right, Text::VAlign::Center);
 	o.tickSlider.render(img);
+	o.killSnake.render(img);
 }
 
 void	GameScreen::renderLogs(Image &img) const
@@ -401,4 +540,5 @@ void	GameScreen::render(Image &img)
 	renderLogs(img);
 	renderBoard(img);
 	renderSnake(img);
+	this->_saveQuit.render(img);
 }

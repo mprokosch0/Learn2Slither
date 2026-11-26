@@ -19,16 +19,17 @@ Interpreter::Interpreter(const std::vector<std::vector<GridValues>> &views,
 			{
 				GridValues val = views[i][j];
 				int correct = (i == 3) ? -1 : 0;
+				const size_t n = views[i].size();
 				if (val == GridValues::WALL)
 				{
 					if (i != 2)
 					{
 						if (j == 0)
-							this->_danger[i + correct] = 3;
-						else if (j <= 2)
-							this->_danger[i + correct] = 2;
-						else
+							this->_danger[i + correct] = 7;
+						else if (j == n - 1)
 							this->_danger[i + correct] = 1;
+						else
+							this->_danger[i + correct] = 6 - ((j - 1) * 5) / (n - 2);
 						break ;
 					}
 				}
@@ -37,30 +38,30 @@ Interpreter::Interpreter(const std::vector<std::vector<GridValues>> &views,
 					if (i != 2)
 					{
 						if (j == 0)
-							this->_snakeBody[i + correct] = 3;
-						else if (j <= 2)
-							this->_snakeBody[i + correct] = 2;
-						else
+							this->_snakeBody[i + correct] = 7;
+						else if (j == n - 1)
 							this->_snakeBody[i + correct] = 1;
+						else
+							this->_snakeBody[i + correct] = 6 - ((j - 1) * 5) / (n - 2);
 					}
 				}
 				else if (val == GridValues::GREEN_APPLE && !this->_greenApple[i])
 				{
 					if (j == 0)
-						this->_greenApple[i] = 3;
-					else if (j <= 2)
-						this->_greenApple[i] = 2;
+						this->_greenApple[i + correct] = 7;
+					else if (j == n - 1)
+						this->_greenApple[i + correct] = 1;
 					else
-						this->_greenApple[i] = 1;
+						this->_greenApple[i + correct] = 6 - ((j - 1) * 5) / (n - 2);
 				}
 				else if (val == GridValues::RED_APPLE && !this->_redApple[i])
 				{
 					if (j == 0)
-						this->_redApple[i] = 3;
-					else if (j <= 2)
-						this->_redApple[i] = 2;
+						this->_redApple[i + correct] = 7;
+					else if (j == n - 1)
+						this->_redApple[i + correct] = 1;
 					else
-						this->_redApple[i] = 1;
+						this->_redApple[i + correct] = 6 - ((j - 1) * 5) / (n - 2);
 				}
 			}
 		}
@@ -106,29 +107,29 @@ bool	Interpreter::isTerminal(void) const
 	return (this->_win || this->_lose);
 }
 
-int		Interpreter::getState(void) const
+int64_t		Interpreter::getState(void) const
 {
 	int res(0);
 	int i = 0;
 	for (size_t j = 0; j < this->_danger.size(); j++)
 	{
 		res |= this->_danger[j] << i;
-		i += 2;
+		i += 3;
 	}
 	for (size_t j = 0; j < this->_snakeBody.size(); j++)
 	{
 		res |= this->_snakeBody[j] << i;
-		i += 2;
+		i += 3;
 	}
 	for (size_t j = 0; j < this->_greenApple.size(); j++)
 	{
 		res |= this->_greenApple[j] << i;
-		i += 2;
+		i += 3;
 	}
 	for (size_t j = 0; j < this->_redApple.size(); j++)
 	{
 		res |= this->_redApple[j] << i;
-		i += 2;
+		i += 3;
 	}
 	return res;
 }

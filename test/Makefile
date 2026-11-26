@@ -2,7 +2,7 @@ NAME = Qalgo
 
 CXX = c++
 
-CXXFLAGS = -Wall -Wextra -Werror -std=c++20 -g -Iincludes -MMD -MP
+CXXFLAGS = -Wall -Wextra -Werror -std=c++20 -O3 -Iincludes -MMD -MP
 
 SRCS =	srcs/main.cpp \
 		srcs/Board.cpp \

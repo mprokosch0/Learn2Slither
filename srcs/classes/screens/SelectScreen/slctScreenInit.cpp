@@ -7,7 +7,7 @@ SelectScreen::SelectScreen(size_t width, size_t height, Engine &engine): IScreen
 	_settings((settings){nullptr, false, false, TextBox(), 10, Slider<size_t>(),
 		10, Slider<size_t>(), textCo(), textCo(), textCo(), std::vector<Rectangle>(),
 		std::array<Button, 3>(), std::array<Button, 2>(), std::array<Button, 2>(), std::array<Button, 2>(), true,
-		std::array<Button, 2>(), true, std::array<double, 3>({0.1f, 0.92f, 0.9}),
+		std::array<double, 3>({0.1f, 0.92f, 0.9}),
 		textCo(), std::array<Slider<double>, 3>(), 1000, TextBox(), std::vector<Button>()}),
 	_theme(engine.getTheme())
 {
@@ -41,7 +41,7 @@ SelectScreen::SelectScreen(size_t width, size_t height, Engine &engine): IScreen
 			{
 				engine.prepareNextScreen(std::make_unique<TitleScreen>(width, height, engine));
 			});
-	this->_buttons.emplace_back((box){1078, (int)this->_height - 65, 300, 50},
+	this->_buttons.emplace_back((box){1078, (int)this->_height - 141, 300, 50},
 			t.accent, t.accentHover, t.accent, t.accent, t.accent, t.accent,
 			Text("Launch", 1.f, t.windowBg, t.windowBg), true,
 			[width, height, &engine, &sett]()
@@ -55,8 +55,8 @@ SelectScreen::SelectScreen(size_t width, size_t height, Engine &engine): IScreen
 				a.setTraining(sett.learning);
 				a.setState(Interpreter(b.getSnakeViews(),
 					0, Actions::FORWARD, 0, 0).getState());
-				engine.prepareNextScreen(std::make_unique<GameScreen>(width, height, engine, b, a, sett.nbGamesBox.getUInt(),
-					sett.visualDisplay, sett.exportInput.getText()));
+				engine.prepareNextScreen(std::make_unique<GameScreen>(width, height, engine, b, a,
+					sett.nbGamesBox.getUInt(), sett.exportInput.getText()));
 			});
 
 	this->_fileListRect = Rectangle((box){30, 125, 651, 595}, t.panel, 2, t.borderBox);
@@ -230,23 +230,7 @@ void	SelectScreen::initSettings(void)
 		}
 	);
 
-	sett.onOffDisplay[0] = Button((box){1085, 547, 140, 30}, t.inner, t.hover,
-		t.borderBtn, t.borderHover, t.hover, t.borderHover, Text("On", 0.9f, t.title, t.title), true,
-		[&sett]()
-		{
-			sett.visualDisplay = true;
-		}
-	);
-	sett.onOffDisplay[0].setPressed(true);
-	sett.onOffDisplay[1] = Button((box){1233, 547, 140, 30}, t.inner, t.hover,
-		t.borderBtn, t.borderHover, t.hover, t.borderHover, Text("Off", 0.9f, t.title, t.title), true,
-		[&sett]()
-		{
-			sett.visualDisplay = false;
-		}
-	);
-
-	sett.onOffExport[0] = Button((box){1085, 617, 140, 30}, t.inner, t.hover,
+	sett.onOffExport[0] = Button((box){1085, 557, 140, 30}, t.inner, t.hover,
 		t.borderBtn, t.borderHover, t.hover, t.borderHover, Text("On", 0.9f, t.title, t.title), true,
 		[&sett]()
 		{
@@ -254,7 +238,7 @@ void	SelectScreen::initSettings(void)
 			sett.exportInput.activate();
 		}
 	);
-	sett.onOffExport[1] = Button((box){1233, 617, 140, 30}, t.inner, t.hover,
+	sett.onOffExport[1] = Button((box){1233, 557, 140, 30}, t.inner, t.hover,
 		t.borderBtn, t.borderHover, t.hover, t.borderHover, Text("Off", 0.9f, t.title, t.title), true,
 		[&sett]()
 		{
@@ -270,14 +254,14 @@ void	SelectScreen::initSettings(void)
 	sett.nbGamesBox.activate();
 	sett.nbGamesBox.setMode(TextBox::Mode::UNSIGNED_INT);
 	sett.exportInput = TextBox(Text("", 0.9, t.textMain, t.textSecondary),
-		Rectangle((box){1085, 657, 288, 30}, t.inner, 2, t.borderBtn), t.inner, t.disabled);
+		Rectangle((box){1085, 597, 288, 30}, t.inner, 2, t.borderBtn), t.inner, t.disabled);
 
 	sett.rectangles.emplace_back(
 		Rectangle((box){753, 137, 302, 200}, t.inner, 2, t.borderBox));
 	sett.rectangles.emplace_back(
 		Rectangle((box){753, 367, 302, 341}, t.inner, 2, t.borderBox));
 	sett.rectangles.emplace_back(
-		Rectangle((box){1078, 137, 302, 571}, t.inner, 2, t.borderBox));
+		Rectangle((box){1078, 137, 302, 511}, t.inner, 2, t.borderBox));
 	
 	sett.titles.emplace_back(std::make_pair(
 		Text("BOARD SIZE", 1.2f, t.title, t.title),
@@ -293,9 +277,9 @@ void	SelectScreen::initSettings(void)
 	sett.wSlider = Slider<size_t>((box){764, 222, 280, 3}, t.borderBox, t.disabled, t.accent, t.textBright, t.borderBtn, t.borderHover, t.muted, t.muted, 10, 40);
 	sett.hSlider = Slider<size_t>((box){764, 272, 280, 3}, t.borderBox, t.disabled, t.accent, t.textBright, t.borderBtn, t.borderHover, t.muted, t.muted, 10, 40);
 
-	sett.hyperParametersSlider[0] = Slider<double>((box){1089, 282, 280, 3}, t.borderBox, t.disabled, t.accent, t.textBright, t.borderBtn, t.borderHover, t.muted, t.muted, 0.001, 0.999);
-	sett.hyperParametersSlider[1] = Slider<double>((box){1089, 332, 280, 3}, t.borderBox, t.disabled, t.accent, t.textBright, t.borderBtn, t.borderHover, t.muted, t.muted, 0.001, 0.999);
-	sett.hyperParametersSlider[2] = Slider<double>((box){1089, 382, 280, 3}, t.borderBox, t.disabled, t.accent, t.textBright, t.borderBtn, t.borderHover, t.muted, t.muted, 0.001, 0.999);
+	sett.hyperParametersSlider[0] = Slider<double>((box){1089, 282, 280, 3}, t.borderBox, t.disabled, t.accent, t.textBright, t.borderBtn, t.borderHover, t.muted, t.muted, 0.01, 0.999);
+	sett.hyperParametersSlider[1] = Slider<double>((box){1089, 332, 280, 3}, t.borderBox, t.disabled, t.accent, t.textBright, t.borderBtn, t.borderHover, t.muted, t.muted, 0.01, 0.999);
+	sett.hyperParametersSlider[2] = Slider<double>((box){1089, 382, 280, 3}, t.borderBox, t.disabled, t.accent, t.textBright, t.borderBtn, t.borderHover, t.muted, t.muted, 0.01, 0.999);
 
 	for (int i = 0; i < 150; i+=50)
 	{
@@ -330,11 +314,8 @@ void	SelectScreen::initSettings(void)
 		Text("Learning", 1.1f, t.textMain, t.textSecondary),
 		std::array<int, 2>{1085, 457}));
 	sett.names.emplace_back(std::make_pair(
-		Text("Visual display", 1.1f, t.textMain, t.textSecondary),
-		std::array<int, 2>{1085, 527}));
-	sett.names.emplace_back(std::make_pair(
 		Text("Save model at the end", 1.1f, t.textMain, t.textSecondary),
-		std::array<int, 2>{1085, 597}));
+		std::array<int, 2>{1085, 532}));
 
 
 	sett.values.emplace_back(std::make_pair(

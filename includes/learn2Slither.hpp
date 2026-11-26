@@ -20,6 +20,9 @@ extern "C"
 # include <chrono>
 # include <format>
 # include <deque>
+# include <thread>
+# include <mutex>
+# include <atomic>
 
 class Image;
 class Engine;
@@ -458,7 +461,16 @@ class IScreen
 class TitleScreen : public IScreen
 {
 	private:
-		int	&_theme;
+		int										&_theme;
+		Board									_b;
+		Agent									_a;
+		const Texture							&_snakeText;
+		std::chrono::steady_clock::time_point	_tPoint;
+	
+	private:
+		void	renderSnake(Image &img) const;
+		void	renderBoard(Image &img) const;
+
 
 	public:
 		TitleScreen(size_t width, size_t height, Engine &engine);
@@ -506,8 +518,6 @@ class SelectScreen : public IScreen
 			std::array<Button, 2>			onOffExport;
 			std::array<Button, 2>			onOffLearning;
 			bool							learning;
-			std::array<Button, 2>			onOffDisplay;
-			bool							visualDisplay;
 			std::array<double, 3>			hPVs;
 			textCo							hyperParametersValues;
 			std::array<Slider<double>, 3>	hyperParametersSlider;
@@ -578,6 +588,7 @@ class GameScreen : public IScreen
 			std::vector<std::pair<Text, std::array<int, 2>>>	values;
 			Slider<int>											tickSlider;
 			int													tickSpeed;
+			Button												killSnake;
 		};
 		struct Logsbox
 		{
@@ -590,9 +601,12 @@ class GameScreen : public IScreen
 	private:
 		Board									_board;
 		Agent									_agent;
+		Agent									_displayAgent;
+		std::mutex								_mtx;
+		std::atomic<bool>						_quitThread;
+		std::atomic<bool>						_threadDone;
 		unsigned int							_nbGames;
 		unsigned int							_gameCount;
-		bool									_visualDisplay;
 		float									_boardZoom;
 		std::string								_exportName;
 		const Texture							&_snakeText;
@@ -603,13 +617,15 @@ class GameScreen : public IScreen
 		Stats									_stats;
 		Options									_options;
 		Logsbox									_logs;
+		Button									_saveQuit;
 	
 	private:
+		void	trainingThread(Board b);
 		void	initStats(const Theme &t);
 		void	initOptions(const Theme &t);
 		void	initLogs(const Theme &t);
 		void	updateHover(int x, int y);
-		void	renderStats(Image &img) const;
+		void	renderStats(Image &img);
 		void	renderOptions(Image &img);
 		void	renderLogs(Image &img) const;
 		void	renderSnake(Image &img) const;
@@ -619,7 +635,7 @@ class GameScreen : public IScreen
 	public:
 		GameScreen(size_t width, size_t height, Engine &engine,
 			Board board, Agent agent, unsigned int nbGames,
-			bool visualDisplay, std::string exportName);
+			std::string exportName);
 	
 	public:
 		void	update() override;

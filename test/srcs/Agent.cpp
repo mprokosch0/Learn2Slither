@@ -148,7 +148,7 @@ void	Agent::parseModel(std::ifstream &file)
 	readBytes(file, &this->_discountFactor, sizeof(this->_discountFactor));
 	readBytes(file, &this->_expRate, sizeof(this->_expRate));
 	int inBetween = 0;
-	int	state = 0;
+	int64_t	state = 0;
 	std::array<double, 3> line;
 	while (1)
 	{
@@ -192,7 +192,7 @@ void	Agent::exportModel(std::string name)
 	fd.write(reinterpret_cast<const char *>(&this->_discountFactor), sizeof(this->_discountFactor));
 	fd.write(reinterpret_cast<const char *>(&this->_expRate), sizeof(this->_expRate));
 	int inBetween = INT_MIN;
-	int end = -1;
+	int64_t end = -1;
 	for (auto &pair : this->_QTable)
 	{
 		std::array<double, 3> line = pair.second;

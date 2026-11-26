@@ -187,9 +187,6 @@ void	SelectScreen::updateTheme(void)
 	for (auto &b : this->_settings.onOffLearning)
 		b.setColors(t.inner, t.hover, t.borderBox, t.borderHover,
 			t.hover, t.borderHover, t.title, t.title);
-	for (auto &b : this->_settings.onOffDisplay)
-		b.setColors(t.inner, t.hover, t.borderBox, t.borderHover,
-			t.hover, t.borderHover, t.title, t.title);
 	for (auto &b : this->_settings.onOffExport)
 		b.setColors(t.inner, t.hover, t.borderBox, t.borderHover,
 			t.hover, t.borderHover, t.title, t.title);
@@ -239,11 +236,6 @@ void	SelectScreen::hoverUpdate(int x, int y)
 		but.hoverIfOnButton(x, y);
 	}
 	for (Button &but : this->_settings.onOffLearning)
-	{
-		but.clearHover();
-		but.hoverIfOnButton(x, y);
-	}
-	for (Button &but : this->_settings.onOffDisplay)
 	{
 		but.clearHover();
 		but.hoverIfOnButton(x, y);
@@ -383,16 +375,6 @@ void	SelectScreen::onMouseDown(int button, int x, int y)
 		{
 			this->_settings.onOffLearning[1].click();
 			this->_settings.onOffLearning[0].setPressed(false);
-		}
-		if (this->_settings.onOffDisplay[0].isMouseOn())
-		{
-			this->_settings.onOffDisplay[0].click();
-			this->_settings.onOffDisplay[1].setPressed(false);
-		}
-		else if (this->_settings.onOffDisplay[1].isMouseOn())
-		{
-			this->_settings.onOffDisplay[1].click();
-			this->_settings.onOffDisplay[0].setPressed(false);
 		}
 		for (Button &but : this->_settings.buttons)
 		{

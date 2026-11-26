@@ -17,6 +17,7 @@ Engine::Engine(size_t winWidth, size_t winHeight): _width(winWidth),
 			throw std::runtime_error("Mlx new window function failed");
 		}
 		this->_img.init(this->_mlx, winWidth, winHeight);
+		addTexture("Snake.xpm", std::make_pair(16, 16));
 		this->_screen = std::make_unique<TitleScreen>(this->_width, this->_height, *this);
 		int w = this->_width;
 		this->_themeRect = Rectangle((box){w - 100, 5, 95, 35},

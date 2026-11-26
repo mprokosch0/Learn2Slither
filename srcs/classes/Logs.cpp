@@ -84,7 +84,7 @@ void	Logs::addLog(std::string str, Colors color)
 			break;
 
 	}
-	this->_lines.emplace_front(std::make_pair(Text(str, 1.f, col, col), color));	
+	this->_lines.emplace_front(std::make_pair(Text(str, 1.f, col, col), color));
 }	
 
 void	Logs::render(Image &img) const

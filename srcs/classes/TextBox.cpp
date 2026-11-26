@@ -162,7 +162,7 @@ void	TextBox::doAction(int keycode)
 				break;
 		}
 	}
-	else if (keycode == ' ')
+	else if (keycode == ' ' && this->_mode != Mode::UNSIGNED_INT)
 		this->_input.addChar(' ', this->_cursorPos++);
 	else if (this->_cursorPos > 0 && static_cast<keycodes>(keycode) == keycodes::BACKSPACE)
 		this->_input.deleteChar(this->_cursorPos-- - 1);
