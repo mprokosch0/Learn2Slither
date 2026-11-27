@@ -4,10 +4,57 @@
 #define MAX_PIXEL_HEIGHT 777
 #define PIXEL_PAD_BOARD 8
 
+static void	fillBoardText(Board const &b, std::vector<std::vector<std::pair<int, int>>> &bT)
+{
+	bT.reserve(b.getHeight());
+	auto &grid = b.getGrid();
+	for (size_t i = 0; i < grid.size(); i++)
+	{
+		bT.emplace_back(b.getWidth(), std::pair<int, int>(0, 0));
+		for (size_t j = 0; j < grid[i].size(); j++)
+		{
+			std::pair<int, int> &val = bT[i][j];
+			val.first = std::rand() % 4;
+			val.second = std::rand() % 2;
+		}
+	}
+}
+
+static void	fillBoardWallText(Board const &b, std::vector<std::vector<std::pair<int, int>>> &bWT)
+{
+	bWT.reserve(4);
+	size_t width = b.getWidth();
+	size_t height = b.getHeight();
+	const int tab[3] = {13, 14, 15};
+	bWT.emplace_back(height, std::pair<int, int>(0, 0));
+	bWT.emplace_back(height, std::pair<int, int>(0, 0));
+	for (size_t i = height; i > 0; i--)
+	{
+		std::pair<int, int> &val = bWT[0][i];
+		std::pair<int, int> &val2 = bWT[1][i];
+		val.first = tab[std::rand() % 3];
+		val.second = 1;
+		val2.first = tab[std::rand() % 3];
+		val2.second = 1;
+	}
+	bWT.emplace_back(width - 2, std::pair<int, int>(0, 0));
+	bWT.emplace_back(width - 2, std::pair<int, int>(0, 0));
+	for (size_t i = width - 2; i > 0; i--)
+	{
+		std::pair<int, int> &val = bWT[2][i];
+		std::pair<int, int> &val2 = bWT[3][i];
+		val.first = tab[std::rand() % 3];
+		val.second = 1;
+		val2.first = tab[std::rand() % 3];
+		val2.second = 1;
+	}
+}
+
 GameScreen::GameScreen(size_t width, size_t height, Engine &engine,
 	Board board, Agent agent, unsigned int nbGames, std::string exportName):
 	IScreen(width, height), _board(board), _agent(agent), _displayAgent(agent), _quitThread(false),
 	_threadDone(false), _nbGames(nbGames), _gameCount(0), _boardZoom(0.f), _exportName(exportName),
+	_bTextures(), _bWallTextures(),
 	_snakeText(engine.getTextures().at("Snake.xpm")), _theme(engine.getTheme()),
 	_stepTime(1.0), _step(), _boardRect(), _stats(), _options(), _logs(), _saveQuit()
 {
@@ -43,6 +90,9 @@ GameScreen::GameScreen(size_t width, size_t height, Engine &engine,
 		}
 		);
 	
+	fillBoardText(this->_board, this->_bTextures);
+	fillBoardWallText(this->_board, this->_bWallTextures);
+
 	std::thread thread(&GameScreen::trainingThread, this, this->_board);
 	if (thread.joinable())
 		thread.detach();
@@ -431,10 +481,22 @@ void	GameScreen::renderSnake(Image &img) const
 {
 	Directions dir = this->_board.getSnakeOrientation();
 	std::pair<int, int> bSize = this->_snakeText.getBlockSize();
+	std::array<int, 4>	snakeOrientText({0, 3, 2, 1});
+	const auto &views = this->_board.getSnakeViews();
+	const auto &view = views[0];
+	size_t	appleDist = 0;
+	for (appleDist = 0; appleDist < view.size(); appleDist++)
+		if (view[appleDist] == GridValues::GREEN_APPLE
+			|| view[appleDist] == GridValues::RED_APPLE)
+			break ;
+	appleDist++;
+	const int tab[5] = {0, 4, 3, 2, 1};
+	if (appleDist >= view.size() || appleDist >= 5)
+		appleDist = 0;
+	appleDist = tab[appleDist];
 	float zoom = this->_boardZoom;
 	bSize.first *= zoom;
 	bSize.second *= zoom;
-	std::array<int, 4>	snakeOrientText({0, 3, 2, 1});
 	auto &snake = this->_board.getSnakePos();
 	if (!snake.size())
 		return ;
@@ -447,7 +509,7 @@ void	GameScreen::renderSnake(Image &img) const
 									yStart + (snake[snakeIndex].second) * bSize.first,
 									zoom);
 							};
-	putSnakeText(0, std::make_pair(0, 3 + snakeOrientText[static_cast<int>(dir)] + 7 * this->_theme));
+	putSnakeText(0, std::make_pair(0 + appleDist, 3 + snakeOrientText[static_cast<int>(dir)] + 7 * this->_theme));
 	for (size_t i = 1; i < snake.size() - 1; i++)
 	{
 		int xBdiff = snake[i].first - snake[i - 1].first;
@@ -497,34 +559,43 @@ void	GameScreen::renderBoard(Image &img) const
 	bSize.second *= zoom;
 	const int pxWidth = grid[0].size() * bSize.second;
 	const int pxHeight = grid.size() * bSize.first;
+	const int xStart = PIXEL_PAD_BOARD + 7;
 	const int yStart = (this->_height - pxHeight) / 2;
 
 	this->_boardRect.render(img);
 
 	for (int y = yStart; y < yStart + pxHeight; y += bSize.first)
 	{
-		for (int x = PIXEL_PAD_BOARD + 7; x < pxWidth + PIXEL_PAD_BOARD; x += bSize.second)
+		for (int x = xStart; x < xStart + pxWidth; x += bSize.second)
 		{
-			const GridValues &val = grid[(y - yStart) / bSize.first][(x - PIXEL_PAD_BOARD - 7) / bSize.second];
-			this->_snakeText.applyBloc(img, std::make_pair(0, 1 + 7 * this->_theme), x, y, zoom);
-			switch (val)
-			{	
-				case GridValues::GREEN_APPLE:
-					this->_snakeText.applyBloc(img, std::make_pair(1, 21), x, y, zoom);
-					break;
-				
-				case GridValues::RED_APPLE:
-					this->_snakeText.applyBloc(img, std::make_pair(0, 21), x, y, zoom);
-					break;
-				
-				case GridValues::WALL:
-					this->_snakeText.applyBloc(img, std::make_pair(13, 1 + 7 * this->_theme), x, y, zoom);
-					break;
-			
-				default:
-					break;
-			}
+			GridValues v = grid[(y - yStart) / bSize.first][(x - xStart) / bSize.second];
+			auto val = this->_bTextures[(y - yStart) / bSize.first][(x - xStart) / bSize.second];
+			val.second += 7 * this->_theme;
+			this->_snakeText.applyBloc(img, val, x, y, zoom);
+			if (v == GridValues::GREEN_APPLE)
+				this->_snakeText.applyBloc(img, std::make_pair(1, 21), x, y, zoom);
+			else if (v == GridValues::RED_APPLE)
+				this->_snakeText.applyBloc(img, std::make_pair(0, 21), x, y, zoom);
 		}
+	}
+	renderSnake(img);
+	for (int y = yStart; y < yStart + pxHeight; y += bSize.first)
+	{
+		auto val = this->_bWallTextures[0][((y - yStart) / bSize.first) + 1];
+		auto val2 = this->_bWallTextures[1][((y - yStart) / bSize.first) + 1];
+		val.second += 7 * this->_theme;
+		val2.second += 7 * this->_theme;
+		this->_snakeText.applyBloc(img, val, xStart, y, zoom);
+		this->_snakeText.applyBloc(img, val2, xStart + pxWidth - bSize.second, y, zoom);
+	}
+	for (int x = xStart + bSize.second; x < xStart + pxWidth - bSize.second; x += bSize.second)
+	{
+		auto val = this->_bWallTextures[2][((x - xStart) / bSize.second)];
+		auto val2 = this->_bWallTextures[3][((x - xStart) / bSize.second)];
+		val.second += 7 * this->_theme;
+		val2.second += 7 * this->_theme;
+		this->_snakeText.applyBloc(img, val, x, yStart + pxHeight - bSize.first, zoom);
+		this->_snakeText.applyBloc(img, val2, x, yStart, zoom);
 	}
 }
 
@@ -571,6 +642,5 @@ void	GameScreen::render(Image &img)
 	renderOptions(img);
 	renderLogs(img);
 	renderBoard(img);
-	renderSnake(img);
 	this->_saveQuit.render(img);
 }

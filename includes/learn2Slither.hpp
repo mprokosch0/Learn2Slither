@@ -446,8 +446,6 @@ class IScreen
 		IScreen(size_t width, size_t height):
 			_width(width), _height(height){};
 		virtual ~IScreen() = default;
-		virtual void onEnter(void) {};
-		virtual void onExit(void) {};
 		virtual void update(void) = 0;
 		virtual void updateTheme(void) = 0;
 		virtual void render(Image &img) = 0;
@@ -461,11 +459,12 @@ class IScreen
 class TitleScreen : public IScreen
 {
 	private:
-		int										&_theme;
-		Board									_b;
-		Agent									_a;
-		const Texture							&_snakeText;
-		std::chrono::steady_clock::time_point	_tPoint;
+		int												&_theme;
+		Board											_b;
+		std::vector<std::vector<std::pair<int, int>>>	_bTextures;
+		Agent											_a;
+		const Texture									&_snakeText;
+		std::chrono::steady_clock::time_point			_tPoint;
 	
 	private:
 		void	renderSnake(Image &img) const;
@@ -601,25 +600,27 @@ class GameScreen : public IScreen
 		
 
 	private:
-		Board									_board;
-		Agent									_agent;
-		Agent									_displayAgent;
-		std::mutex								_mtx;
-		std::atomic<bool>						_quitThread;
-		std::atomic<bool>						_threadDone;
-		unsigned int							_nbGames;
-		unsigned int							_gameCount;
-		float									_boardZoom;
-		std::string								_exportName;
-		const Texture							&_snakeText;
-		int										&_theme;
-		double									_stepTime;
-		std::chrono::steady_clock::time_point	_step;
-		Rectangle								_boardRect;
-		Stats									_stats;
-		Options									_options;
-		Logsbox									_logs;
-		Button									_saveQuit;
+		Board											_board;
+		Agent											_agent;
+		Agent											_displayAgent;
+		std::mutex										_mtx;
+		std::atomic<bool>								_quitThread;
+		std::atomic<bool>								_threadDone;
+		unsigned int									_nbGames;
+		unsigned int									_gameCount;
+		float											_boardZoom;
+		std::string										_exportName;
+		std::vector<std::vector<std::pair<int, int>>>	_bTextures;
+		std::vector<std::vector<std::pair<int, int>>>	_bWallTextures;
+		const Texture									&_snakeText;
+		int												&_theme;
+		double											_stepTime;
+		std::chrono::steady_clock::time_point			_step;
+		Rectangle										_boardRect;
+		Stats											_stats;
+		Options											_options;
+		Logsbox											_logs;
+		Button											_saveQuit;
 	
 	private:
 		void	trainingThread(Board b);

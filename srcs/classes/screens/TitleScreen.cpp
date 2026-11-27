@@ -1,7 +1,24 @@
 #include "learn2Slither.hpp"
 
+static void	fillBoardText(Board const &b, std::vector<std::vector<std::pair<int, int>>> &bT)
+{
+	bT.reserve(b.getHeight());
+	auto &grid = b.getGrid();
+	for (size_t i = 0; i < grid.size(); i++)
+	{
+		bT.emplace_back(b.getWidth(), std::pair<int, int>(0, 0));
+		for (size_t j = 0; j < grid[i].size(); j++)
+		{
+			std::pair<int, int> &val = bT[i][j];
+			val.first = std::rand() % 4;
+			val.second = std::rand() % 2;
+		}
+	}
+}
+
 TitleScreen::TitleScreen(size_t width, size_t height, Engine &engine): IScreen(width, height),
-	_theme(engine.getTheme()), _b(15, 15), _a(), _snakeText(engine.getTextures().at("Snake.xpm")),
+	_theme(engine.getTheme()), _b(15, 15), _bTextures(), _a(),
+	_snakeText(engine.getTextures().at("Snake.xpm")),
 	_tPoint(std::chrono::steady_clock::now())
 {
 	this->_a.importModel("./models/t3.mdl");
@@ -22,6 +39,7 @@ TitleScreen::TitleScreen(size_t width, size_t height, Engine &engine): IScreen(w
 			{
 				engine.quit();
 			});
+	fillBoardText(this->_b, this->_bTextures);
 }
 
 void	TitleScreen::updateTheme(void)
@@ -96,10 +114,22 @@ void	TitleScreen::renderSnake(Image &img) const
 {
 	Directions dir = this->_b.getSnakeOrientation();
 	std::pair<int, int> bSize = this->_snakeText.getBlockSize();
+	std::array<int, 4>	snakeOrientText({0, 3, 2, 1});
+	const auto &views = this->_b.getSnakeViews();
+	const auto &view = views[0];
+	size_t	appleDist = 0;
+	for (appleDist = 0; appleDist < view.size(); appleDist++)
+		if (view[appleDist] == GridValues::GREEN_APPLE
+			|| view[appleDist] == GridValues::RED_APPLE)
+			break ;
+	appleDist++;
+	const int tab[5] = {0, 4, 3, 2, 1};
+	if (appleDist >= view.size() || appleDist >= 5)
+		appleDist = 0;
+	appleDist = tab[appleDist];
 	float zoom = 6.f;
 	bSize.first *= zoom;
 	bSize.second *= zoom;
-	std::array<int, 4>	snakeOrientText({0, 3, 2, 1});
 	auto &snake = this->_b.getSnakePos();
 	if (!snake.size())
 		return ;
@@ -113,7 +143,7 @@ void	TitleScreen::renderSnake(Image &img) const
 									yStart + (snake[snakeIndex].second) * bSize.first,
 									zoom);
 							};
-	putSnakeText(0, std::make_pair(0, 3 + snakeOrientText[static_cast<int>(dir)] + 7 * this->_theme));
+	putSnakeText(0, std::make_pair(0 + appleDist, 3 + snakeOrientText[static_cast<int>(dir)] + 7 * this->_theme));
 	for (size_t i = 1; i < snake.size() - 1; i++)
 	{
 		int xBdiff = snake[i].first - snake[i - 1].first;
@@ -165,30 +195,18 @@ void	TitleScreen::renderBoard(Image &img) const
 	const int pxHeight = grid.size() * bSize.first;
 	const int xStart = (this->_width - pxWidth) / 2;
 	const int yStart = (this->_height - pxHeight) / 2;
-
 	for (int y = yStart; y < yStart + pxHeight; y += bSize.first)
 	{
 		for (int x = xStart; x < xStart + pxWidth; x += bSize.second)
 		{
-			const GridValues &val = grid[(y - yStart) / bSize.first][(x - xStart) / bSize.second];
-			this->_snakeText.applyBloc(img, std::make_pair(0, 1 + 7 * this->_theme), x, y, zoom);
-			switch (val)
-			{	
-				case GridValues::GREEN_APPLE:
-					this->_snakeText.applyBloc(img, std::make_pair(1, 21), x, y, zoom);
-					break;
-				
-				case GridValues::RED_APPLE:
-					this->_snakeText.applyBloc(img, std::make_pair(0, 21), x, y, zoom);
-					break;
-				
-				case GridValues::WALL:
-					this->_snakeText.applyBloc(img, std::make_pair(13, 1 + 7 * this->_theme), x, y, zoom);
-					break;
-			
-				default:
-					break;
-			}
+			GridValues v = grid[(y - yStart) / bSize.first][(x - xStart) / bSize.second];
+			auto val = this->_bTextures[(y - yStart) / bSize.first][(x - xStart) / bSize.second];
+			val.second += 7 * this->_theme;
+			this->_snakeText.applyBloc(img, val, x, y, zoom);
+			if (v == GridValues::GREEN_APPLE)
+				this->_snakeText.applyBloc(img, std::make_pair(1, 21), x, y, zoom);
+			else if (v == GridValues::RED_APPLE)
+				this->_snakeText.applyBloc(img, std::make_pair(0, 21), x, y, zoom);
 		}
 	}
 }
